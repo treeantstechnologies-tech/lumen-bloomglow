@@ -1,0 +1,60 @@
+# Glowbloom — iOS build → TestFlight (no Mac required; runs on Codemagic cloud)
+# Repo root = this folder (cloned as ~/lumen-bloomglow). Flutter app lives in ./app
+#
+# One-time setup in the Codemagic UI before the first build:
+#   1. Apple Developer Program membership ($99/yr) — required for TestFlight.
+#   2. App Store Connect → create the app record with bundle id com.treeants.glowbloom.
+#   3. App Store Connect → Users and Access → Integrations → create an API key
+#      (Admin/App Manager). Download the .p8 ONCE.
+#   4. Codemagic → Teams/App settings → Integrations → App Store Connect:
+#      add that API key and name it exactly  CodemagicASC  (matches below).
+#   5. Connect this GitHub repo to Codemagic, then start the ios-testflight workflow.
+
+workflows:
+  ios-testflight:
+    name: Glowbloom iOS → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: CodemagicASC      # <-- the API key name you set in step 4
+    environment:
+      ios_signing:
+        distribution_type: app_store        # Codemagic auto-manages the cert + profile
+        bundle_identifier: com.treeants.glowbloom
+      vars:
+        APP_URL: "https://glowbloom.treeantstechnologies.com/"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          cd app
+          flutter pub get
+      - name: Install CocoaPods (only if a Podfile is present)
+        script: |
+          cd app/ios
+          if [ -f Podfile ]; then pod install; fi
+      - name: Set up code signing on the Xcode project
+        script: |
+          cd app
+          xcode-project use-profiles
+      - name: Build signed IPA
+        script: |
+          cd app
+          flutter build ipa --release \
+            --dart-define=APP_URL="$APP_URL" \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - app/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true          # auto-sends each build to TestFlight
+      email:
+        recipients:
+          - admin@niytri.com
+        notify:
+          success: true
+          failure: true

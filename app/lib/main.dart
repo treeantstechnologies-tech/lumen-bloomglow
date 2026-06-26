@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
-import 'api.dart';
-import 'theme.dart';
-import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+
+// Glowbloom mobile app = a thin shell around the live web app, so the mobile
+// app and the website share the exact same UI and one codebase.
+// Override the URL at build time with:
+//   flutter run --dart-define=APP_URL=https://glowbloom.treeantstechnologies.com
+const String kAppUrl = String.fromEnvironment(
+  'APP_URL',
+  defaultValue: 'https://glowbloom.treeantstechnologies.com/',
+);
 
 void main() => runApp(const GlowbloomApp());
 
@@ -10,46 +16,61 @@ class GlowbloomApp extends StatelessWidget {
   const GlowbloomApp({super.key});
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       title: 'Glowbloom',
       debugShowCheckedModeBanner: false,
-      theme: glowbloomTheme(),
-      home: const AuthGate(),
+      home: WebShell(),
     );
   }
 }
 
-class AuthGate extends StatefulWidget {
-  const AuthGate({super.key});
+class WebShell extends StatefulWidget {
+  const WebShell({super.key});
   @override
-  State<AuthGate> createState() => _AuthGateState();
+  State<WebShell> createState() => _WebShellState();
 }
 
-class _AuthGateState extends State<AuthGate> {
-  bool _loading = true;
-  bool _authed = false;
+class _WebShellState extends State<WebShell> {
+  late final WebViewController controller;
+  bool loading = true;
 
   @override
   void initState() {
     super.initState();
-    _check();
-  }
-
-  Future<void> _check() async {
-    await Api.instance.loadToken();
-    setState(() {
-      _authed = Api.instance.isSignedIn;
-      _loading = false;
-    });
+    controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0xFF0B0F1F))
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageStarted: (_) => setState(() => loading = true),
+        onPageFinished: (_) => setState(() => loading = false),
+      ))
+      ..loadRequest(Uri.parse(kAppUrl));
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-    return _authed
-        ? HomeScreen(onLogout: () => setState(() => _authed = false))
-        : LoginScreen(onAuthed: () => setState(() => _authed = true));
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        if (await controller.canGoBack()) {
+          controller.goBack();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0B0F1F),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              WebViewWidget(controller: controller),
+              if (loading)
+                const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF7C5BFF)),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

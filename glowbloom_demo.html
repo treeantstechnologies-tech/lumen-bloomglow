@@ -115,6 +115,7 @@ body{
 .controls{flex:0 0 auto;margin-top:clamp(6px,1.2vh,9px);gap:6px;}
 #status{font-size:clamp(11px,1.7vh,13px);}
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
 <body>
@@ -126,8 +127,8 @@ body{
   <div class="screen active card" id="s-login">
     <div class="center" style="font-size:16px;font-weight:700;margin-bottom:3px;">Welcome back</div>
     <div class="center muted">Log in to continue your glow.</div>
-    <div class="social" style="margin-top:16px;">
-      <button class="sbtn" onclick="social('Google')"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg> Continue with Google</button>
+    <div class="social" style="margin-top:16px;"><div id="gbtn-login" style="display:flex;justify-content:center;margin-bottom:8px"></div>
+      <button class="sbtn" style="display:none" onclick="social('Google')"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg> Continue with Google</button>
       <button class="sbtn" onclick="social('Facebook')"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078V12h3.047V9.356c0-3.007 1.792-4.668 4.533-4.668 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874V12h3.328l-.532 3.469h-2.796v8.385C19.612 22.954 24 17.99 24 12z"/></svg> Continue with Facebook</button>
       <button class="sbtn" onclick="social('Apple')"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#000" d="M17.05 12.04c-.03-2.9 2.37-4.29 2.48-4.36-1.35-1.98-3.46-2.25-4.21-2.28-1.79-.18-3.5 1.05-4.41 1.05-.91 0-2.31-1.03-3.8-1-1.95.03-3.76 1.13-4.76 2.88-2.04 3.53-.52 8.75 1.46 11.61.97 1.4 2.12 2.97 3.63 2.91 1.45-.06 2-.94 3.75-.94 1.74 0 2.24.94 3.77.91 1.56-.03 2.54-1.41 3.49-2.82.61-.9 1.08-1.89 1.32-2.94-.03-.01-2.5-.96-2.78-3.55zM14.6 4.21c.8-.97 1.34-2.32 1.19-3.66-1.15.05-2.54.77-3.37 1.74-.74.86-1.39 2.23-1.22 3.55 1.28.1 2.59-.65 3.4-1.63z"/></svg> Sign in with Apple</button>
     </div>
@@ -142,8 +143,8 @@ body{
   <div class="screen card" id="s-reg">
     <div class="center" style="font-size:16px;font-weight:700;margin-bottom:3px;">Create your account</div>
     <div class="center muted">Email is required. Mobile is optional.</div>
-    <div class="social" style="margin-top:16px;">
-      <button class="sbtn" onclick="social('Google')"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg> Continue with Google</button>
+    <div class="social" style="margin-top:16px;"><div id="gbtn-reg" style="display:flex;justify-content:center;margin-bottom:8px"></div>
+      <button class="sbtn" style="display:none" onclick="social('Google')"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg> Continue with Google</button>
       <button class="sbtn" onclick="social('Facebook')"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078V12h3.047V9.356c0-3.007 1.792-4.668 4.533-4.668 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874V12h3.328l-.532 3.469h-2.796v8.385C19.612 22.954 24 17.99 24 12z"/></svg> Continue with Facebook</button>
       <button class="sbtn" onclick="social('Apple')"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#000" d="M17.05 12.04c-.03-2.9 2.37-4.29 2.48-4.36-1.35-1.98-3.46-2.25-4.21-2.28-1.79-.18-3.5 1.05-4.41 1.05-.91 0-2.31-1.03-3.8-1-1.95.03-3.76 1.13-4.76 2.88-2.04 3.53-.52 8.75 1.46 11.61.97 1.4 2.12 2.97 3.63 2.91 1.45-.06 2-.94 3.75-.94 1.74 0 2.24.94 3.77.91 1.56-.03 2.54-1.41 3.49-2.82.61-.9 1.08-1.89 1.32-2.94-.03-.01-2.5-.96-2.78-3.55zM14.6 4.21c.8-.97 1.34-2.32 1.19-3.66-1.15.05-2.54.77-3.37 1.74-.74.86-1.39 2.23-1.22 3.55 1.28.1 2.59-.65 3.4-1.63z"/></svg> Sign in with Apple</button>
     </div>
@@ -169,7 +170,7 @@ body{
   <div class="screen card" id="s-otp">
     <div class="center" style="font-size:18px;font-weight:700;">Verify your email</div>
     <div class="center muted" id="otpTo">Code sent to player@example.com</div>
-    <div class="center muted" style="margin-top:8px;">Demo code: <b id="demoCode" style="color:#FFC36B"></b></div>
+    <div class="center muted" id="demoRow" style="margin-top:8px;display:none;">Demo code: <b id="demoCode" style="color:#FFC36B"></b></div>
     <label>Enter 6-digit code</label>
     <input id="otp" inputmode="numeric" placeholder="------"/>
     <div class="kids" id="kidsNote">Under-18 detected — kids mode: non-personalised ads only, no profiling, parental consent required (DPDP).</div>
@@ -281,21 +282,37 @@ body{
   async function loadStats(){var r=await api('/stats/me'); if(r.ok){best.level=r.data.bestLevel||0; best.score=r.data.bestScore||0; best.runs=r.data.runs||0;} if(me&&me.glade){best.light=me.glade.totalLight||0;} refreshHome();}
   function toTitle(s){return (s||'').toLowerCase().replace(/\b\w/g,function(c){return c.toUpperCase();}).trim();}
   window.social=function(p){ account.name=toTitle(p+' user'); account.email=p.toLowerCase()+'@example.com'; id('who').textContent=account.name; enterApp(); };
+  // ---- Real Google Sign-In (GIS) ----
+  var GOOGLE_CLIENT_ID='318258264454-k63f3lnpmio66dv3eu7g0irvjljf1du7.apps.googleusercontent.com';
+  window.onGoogleCredential=async function(resp){
+    var r=await api('/auth/google',{method:'POST',body:{credential:resp.credential,platform:'web',acceptedTerms:true}});
+    if(!r.ok){ alert('Google sign-in failed. Please try again.'); return; }
+    setToken(r.data.token); me=r.data.user||null;
+    if(me&&me.displayName){ account.name=me.displayName; id('who').textContent=account.name; }
+    loadStats(); show('s-home');
+  };
+  function gInit(){
+    if(!(window.google&&google.accounts&&google.accounts.id)){ return setTimeout(gInit,250); }
+    google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID, callback:window.onGoogleCredential});
+    ['gbtn-login','gbtn-reg'].forEach(function(cid){ var el=id(cid); if(el){ el.innerHTML=''; google.accounts.id.renderButton(el,{theme:'filled_blue',size:'large',type:'standard',text:'continue_with',shape:'pill',width:300}); } });
+  }
+  gInit();
+
   function agreed(){var a=document.getElementById('agree'); if(a&&!a.checked){alert('Please accept the Terms & Privacy Policy to continue.');return false;} return true;}
   var otpFrom='s-reg';
   window.backFromOtp=function(){ show(otpFrom||'s-reg'); };
-  window.loginStart=async function(){ otpFrom='s-login'; var em=((id('lemail').value)||'').trim(); if(!em){alert('Enter your email');return;} account.email=em; account.name=toTitle(em.split('@')[0]); id('who').textContent=account.name; account.minor=false; id('otpTo').textContent='Code sent to '+em; id('demoCode').textContent='…'; id('otp').value=''; id('kidsNote').style.display='none'; show('s-otp'); var r=await api('/auth/email/start',{method:'POST',body:{email:em}}); if(!r.ok){id('demoCode').textContent='(send failed)';return;} id('demoCode').textContent=r.data.devCode||'(sent to your email)'; if(r.data.devCode)id('otp').value=r.data.devCode; };
+  window.loginStart=async function(){ otpFrom='s-login'; var em=((id('lemail').value)||'').trim(); if(!em){alert('Enter your email');return;} var ex=await api('/auth/email/exists?email='+encodeURIComponent(em)); if(ex.ok&&ex.data&&ex.data.exists===false){ var _re=document.getElementById('email'); if(_re)_re.value=em; alert('You are not registered yet \u2014 please create your account first, then you can log in.'); show('s-reg'); return; } account.email=em; account.name=toTitle(em.split('@')[0]); id('who').textContent=account.name; account.minor=false; id('otpTo').textContent='Code sent to '+em; id('demoRow').style.display='none'; id('otp').value=''; id('kidsNote').style.display='none'; show('s-otp'); var r=await api('/auth/email/start',{method:'POST',body:{email:em}}); if(!r.ok){id('demoRow').style.display='block';id('demoCode').textContent='(send failed)';return;} if(r.data.devCode){id('demoRow').style.display='block';id('demoCode').textContent=r.data.devCode;id('otp').value=r.data.devCode;} };
   window.sendCode=async function(){ if(!agreed())return;
     var em=(id('email').value||'').trim(); if(!em){alert('Email is required');return;} account.email=em;
     var _n=(id('mobile').value||'').trim(); account.mobile=_n?(id('ccode').value+' '+_n):'';
     var y=parseInt(id('byear').value||'2000',10); account.byear=y; account.minor=(new Date().getFullYear()-y)<18;
     var _fn=((id('fname')&&id('fname').value)||'').trim(),_ln=((id('lname')&&id('lname').value)||'').trim();account.name=toTitle((_fn+' '+_ln).trim())||toTitle(em.split('@')[0]); id('who').textContent=account.name;
     id('otpTo').textContent='Code sent to '+account.email+(account.mobile?(' and '+account.mobile):'');
-    id('demoCode').textContent='…'; id('otp').value=''; id('kidsNote').style.display=account.minor?'block':'none';
+    id('demoRow').style.display='none'; id('otp').value=''; id('kidsNote').style.display=account.minor?'block':'none';
     otpFrom='s-reg'; show('s-otp');
     var r=await api('/auth/email/start',{method:'POST',body:{email:em}});
-    if(!r.ok){id('demoCode').textContent='(send failed)';return;}
-    id('demoCode').textContent=r.data.devCode||'(sent to your email)'; if(r.data.devCode)id('otp').value=r.data.devCode;
+    if(!r.ok){id('demoRow').style.display='block';id('demoCode').textContent='(send failed)';return;}
+    if(r.data.devCode){id('demoRow').style.display='block';id('demoCode').textContent=r.data.devCode;id('otp').value=r.data.devCode;}
   };
   window.verify=async function(){ var code=(id('otp').value||'').trim(); if(!code){alert('Enter the code');return;} var r=await api('/auth/email/verify',{method:'POST',body:{email:account.email,code:code,displayName:account.name,birthYear:account.byear,acceptedTerms:true,platform:'web'}}); if(!r.ok){alert('Invalid or expired code');return;} setToken(r.data.token); me=r.data.user||null; if(me&&me.displayName){account.name=me.displayName;id('who').textContent=account.name;} loadStats(); show(otpFrom==='s-login'?'s-home':'s-onb'); };
   window.enterApp=function(){ refreshHome(); show('s-home'); };

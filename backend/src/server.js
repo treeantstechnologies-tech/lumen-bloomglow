@@ -16,6 +16,7 @@ app.use(cors({ origin: (process.env.CORS_ORIGIN || "*").split(",") }));
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "..", "public")));
+app.use("/admin", require("./admin")); // admin module API
 
 app.get("/health", (req, res) => {
   res.json({ ok: true, service: "glowbloom-backend", version: "0.1.0", time: new Date().toISOString() });
@@ -43,7 +44,7 @@ async function logConsent(req, opts) {
 
 async function issueCode(target, channel) {
   const code = randomCode();
-  await prisma.verificationCode.create({ data: { target, channel, codeHash: hashCode(code), expiresAt: new Date(Date.now() + 10 * 60 * 1000) } });
+  await prisma.verificationCode.create({ data: { target, channel, codeHash: hashCode(code), expiresAt: new Date(Date.now() + (Number(process.env.OTP_TTL_MIN) || 5) * 60 * 1000) } });
   if (channel === "EMAIL") {
     try { await sendOtpEmail(target, code); } catch (e) { console.error("OTP email failed:", e.message); }
   }
@@ -68,6 +69,13 @@ app.post("/auth/email/start", async (req, res) => {
   if (!email) return res.status(400).json({ error: "email_required" });
   const code = await issueCode(String(email).toLowerCase(), "EMAIL");
   res.json({ ok: true, devCode: code });
+});
+
+app.get("/auth/email/exists", async (req, res) => {
+  const email = String(req.query.email || "").toLowerCase().trim();
+  if (!email) return res.status(400).json({ error: "email_required" });
+  const user = await prisma.user.findUnique({ where: { email } }).catch(() => null);
+  res.json({ exists: !!user });
 });
 
 app.post("/auth/email/verify", async (req, res) => {
@@ -119,6 +127,44 @@ app.post("/auth/social", async (req, res) => {
     await logConsent(req, { userId: user.id, doc: "PRIVACY" });
   }
   res.json({ token: signToken(user), user: publicUser(user), emailComplete: user.emailVerified && !user.email.endsWith("@glowbloom.local"), kidsMode: user.isMinor, termsVersion: TERMS_VERSION });
+});
+
+app.post("/auth/google", async (req, res) => {
+  const { credential, acceptedTerms } = req.body || {};
+  if (!credential) return res.status(400).json({ error: "credential_required" });
+  let info;
+  try {
+    const vr = await fetch("https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(credential));
+    info = await vr.json();
+    if (!vr.ok || !info || !info.sub) return res.status(401).json({ error: "google_verify_failed" });
+  } catch (e) { return res.status(401).json({ error: "google_verify_failed" }); }
+  const expected = process.env.GOOGLE_CLIENT_ID;
+  if (expected && info.aud !== expected) return res.status(401).json({ error: "google_aud_mismatch" });
+  const providerUserId = info.sub;
+  const email = (info.email || "").toLowerCase();
+  const name = info.name || (email ? email.split("@")[0] : "Player");
+  let user = null, isNew = false;
+  const link = await prisma.authProvider.findUnique({ where: { provider_providerUserId: { provider: "GOOGLE", providerUserId } }, include: { user: { include: { glade: true } } } }).catch(() => null);
+  if (link) user = link.user;
+  if (!user && email) {
+    user = await prisma.user.findUnique({ where: { email }, include: { glade: true } }).catch(() => null);
+    if (user) await prisma.authProvider.create({ data: { userId: user.id, provider: "GOOGLE", providerUserId } }).catch(() => {});
+  }
+  if (!user) {
+    isNew = true;
+    user = await prisma.user.create({
+      data: {
+        email: email || ("google_" + providerUserId + "@glowbloom.local"),
+        emailVerified: info.email_verified === "true" || info.email_verified === true || !!email,
+        displayName: name, avatarUrl: info.picture || null,
+        glade: { create: {} }, providers: { create: { provider: "GOOGLE", providerUserId } },
+      },
+      include: { glade: true },
+    });
+  }
+  await logAuth(req, { userId: user.id, event: isNew ? "REGISTER" : "LOGIN", method: "GOOGLE" });
+  if (isNew && acceptedTerms) { await logConsent(req, { userId: user.id, doc: "TERMS" }); await logConsent(req, { userId: user.id, doc: "PRIVACY" }); }
+  res.json({ token: signToken(user), user: publicUser(user), isNew, kidsMode: user.isMinor, termsVersion: TERMS_VERSION });
 });
 
 app.post("/auth/mobile/start", requireAuth, async (req, res) => {

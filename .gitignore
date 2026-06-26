@@ -1,4 +1,7 @@
 # ---- Secrets ----
+backend/data/
+backend/_admintest.js
+backend/data/config.json
 .env
 *.local
 

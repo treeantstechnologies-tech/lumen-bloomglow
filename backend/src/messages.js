@@ -13,6 +13,8 @@ const DEFAULTS = {
   invalid_code:   "Invalid or expired code",
   buds_max:       "You can buy at most 2 Buds per run.",
   buds_low:       "Not enough light to buy a Bud.",
+  share_copied:   "Link copied - share it with friends!",
+  session_expired:"Your session expired. Please log in again.",
 };
 
 function overrides() {

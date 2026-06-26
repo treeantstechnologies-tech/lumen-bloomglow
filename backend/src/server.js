@@ -251,7 +251,7 @@ async function rankedBoard(opts) {
   if (opts.seed) where.dailySeed = String(opts.seed);
   const since = windowSince(opts.window);
   if (since) where.createdAt = { gte: since };
-  const scores = await prisma.score.findMany({ where, orderBy: { light: "desc" }, take: 1000, include: { user: { select: { id: true, displayName: true } } } });
+  const scores = await prisma.score.findMany({ where, orderBy: [{ light: "desc" }, { level: "desc" }], take: 1000, include: { user: { select: { id: true, displayName: true } } } });
   const seen = new Set();
   const best = [];
   for (const s of scores) { if (seen.has(s.user.id)) continue; seen.add(s.user.id); best.push(s); }
@@ -259,13 +259,23 @@ async function rankedBoard(opts) {
 }
 app.get("/scores/top", async (req, res) => {
   const best = await rankedBoard({ mode: req.query.mode || "JOURNEY", window: req.query.window || "all", seed: req.query.seed });
-  const top = best.slice(0, 50).map((s, i) => ({ rank: i + 1, userId: s.user.id, name: s.user.displayName, light: s.light, level: s.level }));
-  res.json({ window: req.query.window || "all", top });
+  let _r = 0, _prev = null;
+  const ranked = best.map((s, i) => {
+    const key = s.light + "|" + s.level;
+    if (key !== _prev) { _r = i + 1; _prev = key; }
+    return { rank: _r, userId: s.user.id, name: s.user.displayName, light: s.light, level: s.level };
+  });
+  res.json({ window: req.query.window || "all", top: ranked.slice(0, 50) });
 });
 app.get("/scores/rank", requireAuth, async (req, res) => {
   const best = await rankedBoard({ mode: req.query.mode || "JOURNEY", window: req.query.window || "all" });
-  const idx = best.findIndex((s) => s.user.id === req.userId);
-  res.json({ rank: idx >= 0 ? idx + 1 : null, of: best.length });
+  let _r = 0, _prev = null, mine = null;
+  best.forEach((s, i) => {
+    const key = s.light + "|" + s.level;
+    if (key !== _prev) { _r = i + 1; _prev = key; }
+    if (s.user.id === req.userId && mine === null) mine = _r;
+  });
+  res.json({ rank: mine, of: best.length });
 });
 app.get("/stats/me", requireAuth, async (req, res) => {
   const agg = await prisma.score.aggregate({ where: { userId: req.userId }, _max: { light: true, level: true, maxRadiance: true }, _count: true });

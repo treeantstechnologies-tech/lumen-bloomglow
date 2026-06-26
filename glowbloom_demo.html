@@ -55,7 +55,7 @@
   .lbtabs button.on{background:linear-gradient(135deg,#7C5BFF,#9B6BFF);color:#fff;}
   .row{display:flex;align-items:center;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05);margin-bottom:7px;}
   .row.me{border:1px solid rgba(124,91,255,.6);background:rgba(124,91,255,.15);}
-  .rank{width:28px;font-weight:700;color:#FFC36B;} .rname{flex:1;} .rlight{font-weight:700;color:#7BE0C0;} .rlevel{color:#9aa3c7;font-size:12px;margin-right:12px;}
+  .rank{min-width:46px;display:flex;align-items:center;gap:3px;font-weight:700;color:#FFC36B;} .rname{flex:1;text-align:left;padding-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .rlight{font-weight:700;color:#7BE0C0;min-width:50px;text-align:right;} .rlevel{color:#9aa3c7;font-size:12px;margin:0 10px;white-space:nowrap;} .crown{font-size:14px;line-height:1;}
   .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
   .topbar img{height:30px;} .topbar .t{font-weight:700;font-size:18px;}
   .icon-btn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#fff;border-radius:10px;padding:7px 11px;cursor:pointer;font-size:14px;}
@@ -130,11 +130,12 @@ input::placeholder{text-align:center;}
 .pill{padding:clamp(5px,1vh,8px) 4px;}
 .pill .v{font-size:clamp(14px,2.4vh,17px);}
 #board{
-  flex:1 1 0;min-height:0;
-  aspect-ratio:1/1;width:auto;height:auto;
-  max-width:100%;max-height:100%;
-  margin:auto;align-self:center;
-  gap:clamp(6px,1.5vh,10px);
+  flex:0 0 auto;
+  aspect-ratio:1/1;
+  width:min(100%, calc(100dvh - 350px));
+  max-width:100%;
+  margin:clamp(4px,1vh,10px) auto;
+  gap:clamp(6px,1.4vh,10px);
 }
 .bud{font-size:clamp(20px,6vh,34px);}
 .swara{flex:0 0 auto;height:clamp(13px,2vh,18px);font-size:clamp(12px,1.9vh,14px);margin-top:clamp(3px,.8vh,6px);}
@@ -460,7 +461,7 @@ input::placeholder{text-align:center;}
     var rows=(r.ok&&r.data.top)?r.data.top:[]; var html='';
     if(rk.ok&&rk.data.rank){ html+='<div style="color:#9bb4ff;font-weight:600;margin-bottom:8px">Your rank: #'+rk.data.rank+'</div>'; }
     if(!rows.length){ html+='<div style="text-align:center;color:#9aa3c7;padding:16px">No scores yet. Be the first to bloom!</div>'; }
-    rows.forEach(function(r2,i){ html+='<div class="row"><div class="rank">#'+(i+1)+'</div><div class="rname">'+toTitle(r2.name||'Player')+'</div><div class="rlevel">Lv '+(r2.level||1)+'</div><div class="rlight">'+(r2.light||0)+'</div></div>'; });
+    rows.forEach(function(r2){ var rnk=(r2.rank||'-'); var crown=(rnk===1)?'<span class="crown">👑</span>':''; html+='<div class="row"><div class="rank">'+crown+'#'+rnk+'</div><div class="rname">'+toTitle(r2.name||'Player')+'</div><div class="rlevel">Level '+(r2.level||1)+'</div><div class="rlight">'+(r2.light||0)+'</div></div>'; });
     id('lbList').innerHTML=html;
   };
 

@@ -1,47 +1,20 @@
 name: glowbloom
-description: "Project Lumen — Glowbloom, an original memory game."
+description: "Glowbloom — a memory game by TreeAnts Technologies."
 publish_to: "none"
 version: 0.1.0+1
 
 environment:
-  sdk: ">=3.3.0 <4.0.0"
+  sdk: ">=3.4.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  flutter_riverpod: ^2.5.1
-  http: ^1.2.1
-  sqflite: ^2.3.3              # offline SQLite cache on mobile (no codegen)
-  sqflite_common_ffi: ^2.3.3  # SQLite on Windows/Linux/macOS desktop
-  path: ^1.9.0
-  shared_preferences: ^2.2.3
-  google_mobile_ads: ^5.1.0   # AdMob: banner + rewarded
-  fl_chart: ^0.68.0           # improvement-trend sparkline
+  http: ^1.2.0
+  shared_preferences: ^2.2.0
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_lints: ^4.0.0
-  flutter_launcher_icons: ^0.13.1
-
-# App launcher icons (TreeAnts mark). Generate with:
-#   dart run flutter_launcher_icons
-flutter_launcher_icons:
-  android: true
-  ios: true
-  remove_alpha_ios: true
-  image_path: "assets/branding/app_icon.png"
-  adaptive_icon_background: "#0B0F1F"
-  adaptive_icon_foreground: "assets/branding/app_icon_foreground.png"
-  web:
-    generate: true
-    image_path: "assets/branding/app_icon.png"
-    background_color: "#0B0F1F"
-    theme_color: "#FF9900"
-  windows:
-    generate: true
-    image_path: "assets/branding/app_icon.png"
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/branding/

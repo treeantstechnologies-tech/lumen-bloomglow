@@ -5,6 +5,7 @@ const morgan = require("morgan");
 const path = require("path");
 const { getPrisma } = require("./prisma");
 const { hashCode, randomCode, signToken, requireAuth, ageToMinor } = require("./auth");
+const { sendOtpEmail } = require("./mailer");
 
 const app = express();
 const prisma = getPrisma();
@@ -43,6 +44,9 @@ async function logConsent(req, opts) {
 async function issueCode(target, channel) {
   const code = randomCode();
   await prisma.verificationCode.create({ data: { target, channel, codeHash: hashCode(code), expiresAt: new Date(Date.now() + 10 * 60 * 1000) } });
+  if (channel === "EMAIL") {
+    try { await sendOtpEmail(target, code); } catch (e) { console.error("OTP email failed:", e.message); }
+  }
   return DEV_RETURN_CODES ? code : null;
 }
 async function consumeCode(target, channel, code) {

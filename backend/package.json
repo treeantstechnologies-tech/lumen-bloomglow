@@ -2,7 +2,7 @@
   "name": "glowbloom-backend",
   "version": "0.1.0",
   "private": true,
-  "description": "Project Lumen — Glowbloom API (Express + Prisma + Postgres)",
+  "description": "Project Lumen \u2014 Glowbloom API (Express + Prisma + Postgres)",
   "type": "commonjs",
   "main": "src/server.js",
   "scripts": {

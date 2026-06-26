@@ -11,6 +11,8 @@ const DEFAULTS = {
   email_required: "Email is required",
   enter_code:     "Enter the code",
   invalid_code:   "Invalid or expired code",
+  buds_max:       "You can buy at most 2 buds per run.",
+  buds_low:       "Not enough light to buy a bud.",
 };
 
 function overrides() {

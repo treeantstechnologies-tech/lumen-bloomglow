@@ -58,3 +58,29 @@ workflows:
         notify:
           success: true
           failure: true
+
+  # ---- Android APK for sideloading on a device (no Play account needed) ----
+  android-apk:
+    name: Glowbloom Android APK (sideload)
+    instance_type: linux_x2
+    max_build_duration: 45
+    environment:
+      flutter: stable
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          cd app
+          flutter pub get
+      - name: Build release APK
+        script: |
+          cd app
+          flutter build apk --release --dart-define=APP_URL=https://glowbloom.treeantstechnologies.com/
+    artifacts:
+      - app/build/app/outputs/flutter-apk/*.apk
+    publishing:
+      email:
+        recipients:
+          - admin@niytri.com
+        notify:
+          success: true
+          failure: true

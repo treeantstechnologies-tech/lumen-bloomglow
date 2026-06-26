@@ -252,6 +252,7 @@ input::placeholder{text-align:center;}
     <div class="controls">
       <button class="btn sm" id="btn" onclick="onMainBtn()">Start</button>
       <button class="btn sm alt" id="pauseBtn" style="display:none" onclick="togglePause()">Pause</button>
+      <button class="btn sm" id="buyBtn" style="display:none;background:linear-gradient(135deg,#FFB347,#FF7AC6)" onclick="buyBud()">Buy a bud</button>
       <div id="status">Watch the pattern, then tap it back.</div>
     </div>
   </div>
@@ -284,7 +285,7 @@ input::placeholder{text-align:center;}
   <!-- 8. EXIT -->
   <div class="screen card" id="s-exit">
     <div class="center" style="font-size:20px;font-weight:700;">See you tomorrow</div>
-    <div class="center muted" style="margin-top:8px;">The Daily Moonpattern resets at midnight — keep your streak alive.</div>
+    <div class="center muted" style="margin-top:8px;">Thanks for playing. Your light and best scores are saved.</div>
     <div class="stats" style="margin-top:16px;">
       <div class="stat"><div class="v" id="exLight">0</div><div class="l">Light this session</div></div>
       <div class="stat"><div class="v" id="exLevel">0</div><div class="l">Best level</div></div>
@@ -320,7 +321,7 @@ input::placeholder{text-align:center;}
     b.onclick=go;
   }
   window.toast=toast;
-  var DEF={google_fail:"Google sign-in failed. Please try again.",terms_accept:"Please accept the Terms & Privacy Policy to continue.",enter_email:"Enter your email",not_registered:"You are not registered yet \u2014 please create your account first, then you can log in.",email_required:"Email is required",enter_code:"Enter the code",invalid_code:"Invalid or expired code"};
+  var DEF={google_fail:"Google sign-in failed. Please try again.",terms_accept:"Please accept the Terms & Privacy Policy to continue.",enter_email:"Enter your email",not_registered:"You are not registered yet \u2014 please create your account first, then you can log in.",email_required:"Email is required",enter_code:"Enter the code",invalid_code:"Invalid or expired code",buds_max:"You can buy at most 2 buds per run.",buds_low:"Not enough light to buy a bud."};
   var MSG={};
   function M(k){ return (MSG&&MSG[k])||DEF[k]||k; }
   window.M=M;
@@ -415,12 +416,16 @@ input::placeholder{text-align:center;}
   var seq=[],input=[],level=1,score=0,rad=1,lives=4,phase='idle';
   var best={level:0,score:0,light:0,runs:0}, session={light:0};
   var timer=null,remaining=0,paused=false;
+  var boughtBuds=0,needReset=false;
+  function offerBuy(cost){var b=id('buyBtn');if(b){b.style.display='';b.textContent='Buy a bud ('+cost+' light)';}}
+  function hideBuy(){var b=id('buyBtn');if(b)b.style.display='none';}
+  window.buyBud=function(){var cost=level*10;if(boughtBuds>=2){toast(M('buds_max'));return;}if(score<cost){toast(M('buds_low'));return;}score-=cost;lives++;boughtBuds++;needReset=false;phase='idle';hud();hideBuy();id('status').textContent='Bud restored! '+lives+' left. Tap to continue.';showBtn('Retry');};
   function hud(){id('hLevel').textContent=level;id('hScore').textContent=score;id('hRad').textContent='x'+(Math.round(rad*10)/10);id('hLives').textContent=lives;}
   function flash(i,c,ms){els[i].classList.add(c);setTimeout(function(){els[i].classList.remove(c);},ms||450);}
   function showBtn(t){var b=id('btn');if(t){b.style.display='';b.textContent=t;}else{b.style.display='none';}}
-  window.startGame=function(){ level=1;score=0;rad=1;lives=4;phase='idle'; hud(); id('status').textContent='Tap Start, watch the pattern, then tap it back.'; showBtn('Start'); if(id('gName'))id('gName').textContent=account.name; show('s-game'); };
+  window.startGame=function(){ level=1;score=0;rad=1;lives=4;phase='idle';boughtBuds=0;needReset=false; hud(); hideBuy(); id('status').textContent='Tap Start, watch the pattern, then tap it back.'; showBtn('Start'); if(id('gName'))id('gName').textContent=account.name; show('s-game'); };
   window.quitToHome=function(){ stopCountdown(); refreshHome(); show('s-home'); };
-  window.onMainBtn=function(){ if(phase==='idle'){ newRound(); } };
+  window.onMainBtn=function(){ if(phase!=='idle')return; hideBuy(); if(needReset){ level=1;score=0;rad=1;lives=4;boughtBuds=0;needReset=false; hud(); } newRound(); };
   function newRound(){ best.runs++;
     stopCountdown(); input=[];seq=[];var len=2+Math.ceil(level/2);
     for(var k=0;k<len;k++)seq.push(Math.floor(Math.random()*9));
@@ -433,8 +438,13 @@ input::placeholder{text-align:center;}
     flash(i,'lit',200);play(i);input.push(i);var p=input.length-1;
     if(input[p]!==seq[p]){
       flash(i,'wilt',400);lives--;rad=1;phase='idle';hud();
-      if(lives<=0){endRun();id('status').textContent='The garden dims. Light: '+score+'. Tap to play again.';showBtn('Play again');level=1;score=0;}
-      else{id('status').textContent='A bud wilts. '+lives+' left. Tap to retry.';showBtn('Retry');}
+      var _cost=level*10, _canBuy=(boughtBuds<2 && score>=_cost);
+      if(lives<=0){ endRun(); needReset=true;
+        if(_canBuy){ id('status').textContent='Out of buds! Buy one for '+_cost+' light, or tap Play again.'; showBtn('Play again'); offerBuy(_cost); }
+        else { id('status').textContent='The garden dims. Light: '+score+'. Tap to play again.'; showBtn('Play again'); hideBuy(); }
+      } else { needReset=false; id('status').textContent='A bud wilts. '+lives+' left. Tap to retry.'; showBtn('Retry');
+        if(_canBuy) offerBuy(_cost); else hideBuy();
+      }
       return;
     }
     if(input.length===seq.length){

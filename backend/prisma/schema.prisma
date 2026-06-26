@@ -1,0 +1,127 @@
+// Project Lumen — Glowbloom backend
+// Postgres schema. Reflects the approved registration rule:
+//   email = mandatory + verified;  mobile = optional + verified-flag retained.
+// (See Open Questions Decision Log, OQ-01 / registration rule.)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Identity & accounts
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+
+  // Mobile is OPTIONAL. We still keep a verified flag so it can be required
+  // later (per-region / per-feature) without a schema change.
+  mobile         String?  @unique
+  mobileVerified Boolean  @default(false)
+
+  displayName String?
+  avatarUrl   String?
+  locale      String   @default("en")
+
+  // Under-18 users are routed to a DPDP-compliant kids mode (OQ-03).
+  birthYear      Int?
+  isMinor        Boolean @default(false)
+  parentalConsent Boolean @default(false)
+
+  marketingConsent Boolean @default(false)
+
+  providers AuthProvider[]
+  scores    Score[]
+  glade     Glade?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+enum Provider {
+  GOOGLE
+  META       // Facebook Login (Meta's supported consumer path; replaces Instagram)
+  APPLE      // iOS — App Store Guideline 4.8
+  EMAIL
+  MOBILE
+}
+
+// A user may link several sign-in methods that resolve to one account.
+model AuthProvider {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider       Provider
+  providerUserId String   // subject id from the provider (or email/mobile for those)
+  createdAt      DateTime @default(now())
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+}
+
+// One-time codes for email link/code and SMS OTP verification.
+model VerificationCode {
+  id        String   @id @default(cuid())
+  target    String   // email address or mobile number
+  channel   Provider // EMAIL or MOBILE
+  codeHash  String
+  expiresAt DateTime
+  consumed  Boolean  @default(false)
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([target])
+}
+
+// ---------------------------------------------------------------------------
+// Glowbloom game data
+// ---------------------------------------------------------------------------
+
+enum GameMode {
+  JOURNEY
+  DAILY
+  BLOOMSTORM
+  ZEN
+}
+
+model Score {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mode       GameMode @default(JOURNEY)
+  light      Int      // "light" earned (the in-game score)
+  level      Int      @default(1)
+  maxRadiance Float   @default(1)
+  dailySeed  String?  // set for DAILY mode entries
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([mode, dailySeed])
+}
+
+// The persistent personal garden that grows with light earned.
+model Glade {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalLight Int     @default(0)
+  floraJson String   @default("[]") // serialized list of planted flora
+  updatedAt DateTime @updatedAt
+}
+
+// The shared daily puzzle (same seed for everyone) feeding the daily leaderboard.
+model DailyPattern {
+  id        String   @id @default(cuid())
+  date      DateTime @unique @db.Date
+  seed      String
+  createdAt DateTime @default(now())
+}

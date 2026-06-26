@@ -40,11 +40,65 @@ model User {
   providers AuthProvider[]
   scores    Score[]
   glade     Glade?
+  authLogs  AuthLog[]
+  consents  ConsentLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([email])
+}
+
+enum AuthEvent {
+  REGISTER
+  LOGIN
+  LOGOUT
+}
+
+enum ConsentDoc {
+  TERMS
+  PRIVACY
+  MARKETING
+  ADS
+}
+
+// Login / logout / register audit trail with device + network context.
+model AuthLog {
+  id         String    @id @default(cuid())
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  event      AuthEvent
+  method     Provider?
+  success    Boolean   @default(true)
+  ip         String?
+  userAgent  String?
+  platform   String?   // android | ios | web | windows
+  device     String?   // model / device name
+  osVersion  String?
+  appVersion String?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([event])
+  @@index([createdAt])
+}
+
+// Record of every Terms/Privacy/marketing/ads consent the user grants.
+model ConsentLog {
+  id        String     @id @default(cuid())
+  userId    String?
+  user      User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  doc       ConsentDoc
+  version   String
+  accepted  Boolean    @default(true)
+  ip        String?
+  userAgent String?
+  platform  String?
+  device    String?
+  createdAt DateTime   @default(now())
+
+  @@index([userId])
+  @@index([doc])
 }
 
 enum Provider {

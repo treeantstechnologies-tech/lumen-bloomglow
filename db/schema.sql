@@ -96,3 +96,49 @@ CREATE TABLE IF NOT EXISTS "DailyPattern" (
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "DailyPattern_date_key" ON "DailyPattern"("date");
+
+-- ===================== Auth & Consent logs (added v0.2) =====================
+DO $$ BEGIN
+  CREATE TYPE "AuthEvent" AS ENUM ('REGISTER', 'LOGIN', 'LOGOUT');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "ConsentDoc" AS ENUM ('TERMS', 'PRIVACY', 'MARKETING', 'ADS');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS "AuthLog" (
+  "id"         TEXT PRIMARY KEY,
+  "userId"     TEXT,
+  "event"      "AuthEvent" NOT NULL,
+  "method"     "Provider",
+  "success"    BOOLEAN NOT NULL DEFAULT true,
+  "ip"         TEXT,
+  "userAgent"  TEXT,
+  "platform"   TEXT,
+  "device"     TEXT,
+  "osVersion"  TEXT,
+  "appVersion" TEXT,
+  "createdAt"  TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "AuthLog_userId_fkey" FOREIGN KEY ("userId")
+    REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+CREATE INDEX IF NOT EXISTS "AuthLog_userId_idx"    ON "AuthLog"("userId");
+CREATE INDEX IF NOT EXISTS "AuthLog_event_idx"     ON "AuthLog"("event");
+CREATE INDEX IF NOT EXISTS "AuthLog_createdAt_idx" ON "AuthLog"("createdAt");
+
+CREATE TABLE IF NOT EXISTS "ConsentLog" (
+  "id"        TEXT PRIMARY KEY,
+  "userId"    TEXT,
+  "doc"       "ConsentDoc" NOT NULL,
+  "version"   TEXT NOT NULL,
+  "accepted"  BOOLEAN NOT NULL DEFAULT true,
+  "ip"        TEXT,
+  "userAgent" TEXT,
+  "platform"  TEXT,
+  "device"    TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "ConsentLog_userId_fkey" FOREIGN KEY ("userId")
+    REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+CREATE INDEX IF NOT EXISTS "ConsentLog_userId_idx" ON "ConsentLog"("userId");
+CREATE INDEX IF NOT EXISTS "ConsentLog_doc_idx"    ON "ConsentLog"("doc");

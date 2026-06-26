@@ -113,7 +113,7 @@
         <span class="stat"><b id="ovVerified">-</b><span class="muted">Email verified</span></span>
       </div>
       <h2 style="margin-top:6px">Recent registrations</h2>
-      <table><thead><tr><th>Name</th><th>Email</th><th>Verified</th><th>When</th></tr></thead><tbody id="ovUsersTbl"></tbody></table>
+      <table><thead><tr><th>Name</th><th>Email</th><th>Signup via</th><th>Verified</th><th>When</th></tr></thead><tbody id="ovUsersTbl"></tbody></table>
       <h2 style="margin-top:18px">Recent auth events</h2>
       <table><thead><tr><th>Event</th><th>Method</th><th>Platform</th><th>IP</th><th>When</th></tr></thead><tbody id="ovAuthTbl"></tbody></table>
       <div id="ovOut" class="out"></div>
@@ -211,7 +211,7 @@
     id('ovUsers').textContent = d.users!=null?d.users:'-';
     id('ovVerified').textContent = d.verified!=null?d.verified:'-';
     id('ovUsersTbl').innerHTML = (d.recentUsers||[]).map(function(u){
-      return '<tr><td>'+escapeHtml(u.displayName||'-')+'</td><td>'+escapeHtml(u.email)+'</td><td><span class="badge '+(u.emailVerified?'y':'n')+'">'+(u.emailVerified?'yes':'no')+'</span></td><td>'+new Date(u.createdAt).toLocaleString()+'</td></tr>';
+      return '<tr><td>'+escapeHtml(u.displayName||'-')+'</td><td>'+escapeHtml(u.email)+'</td><td>'+(u.initialProvider||'-')+'</td><td><span class="badge '+(u.emailVerified?'y':'n')+'">'+(u.emailVerified?'yes':'no')+'</span></td><td>'+new Date(u.createdAt).toLocaleString()+'</td></tr>';
     }).join('') || '<tr><td colspan="4" class="muted">No users yet.</td></tr>';
     id('ovAuthTbl').innerHTML = (d.recentAuth||[]).map(function(a){
       return '<tr><td>'+a.event+'</td><td>'+(a.method||'-')+'</td><td>'+(a.platform||'-')+'</td><td>'+(a.ip||'-')+'</td><td>'+new Date(a.createdAt).toLocaleString()+'</td></tr>';

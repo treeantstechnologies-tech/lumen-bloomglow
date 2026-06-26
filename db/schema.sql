@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS "User" (
 CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key"  ON "User"("email");
 CREATE UNIQUE INDEX IF NOT EXISTS "User_mobile_key" ON "User"("mobile");
 CREATE INDEX        IF NOT EXISTS "User_email_idx"  ON "User"("email");
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "initialProvider" "Provider";
 
 -- ---------- AuthProvider ----------
 CREATE TABLE IF NOT EXISTS "AuthProvider" (

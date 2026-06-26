@@ -63,7 +63,7 @@ async function consumeCode(target, channel, code) {
   return true;
 }
 function publicUser(u) {
-  return { id: u.id, email: u.email, emailVerified: u.emailVerified, mobile: u.mobile, mobileVerified: u.mobileVerified, displayName: u.displayName, avatarUrl: u.avatarUrl, isMinor: u.isMinor, glade: u.glade ? { totalLight: u.glade.totalLight } : undefined };
+  return { id: u.id, email: u.email, emailVerified: u.emailVerified, mobile: u.mobile, mobileVerified: u.mobileVerified, displayName: u.displayName, avatarUrl: u.avatarUrl, isMinor: u.isMinor, initialProvider: u.initialProvider, glade: u.glade ? { totalLight: u.glade.totalLight } : undefined };
 }
 
 app.post("/auth/email/start", async (req, res) => {
@@ -93,7 +93,7 @@ app.post("/auth/email/verify", async (req, res) => {
     create: {
       email: target, emailVerified: true, displayName: displayName || target.split("@")[0],
       birthYear: birthYear ? Number(birthYear) : null, isMinor: minor,
-      glade: { create: {} }, providers: { create: { provider: "EMAIL", providerUserId: target } },
+      glade: { create: {} }, initialProvider: "EMAIL", providers: { create: { provider: "EMAIL", providerUserId: target } },
     },
     include: { glade: true },
   });
@@ -118,7 +118,7 @@ app.post("/auth/social", async (req, res) => {
         email: email ? String(email).toLowerCase() : `pending+${providerUserId}@glowbloom.local`,
         emailVerified: !!email, displayName: displayName || "Player",
         birthYear: birthYear ? Number(birthYear) : null, isMinor: minor,
-        glade: { create: {} }, providers: { create: { provider, providerUserId } },
+        glade: { create: {} }, initialProvider: provider, providers: { create: { provider, providerUserId } },
       },
       include: { glade: true },
     });
@@ -159,7 +159,7 @@ app.post("/auth/google", async (req, res) => {
         email: email || ("google_" + providerUserId + "@glowbloom.local"),
         emailVerified: info.email_verified === "true" || info.email_verified === true || !!email,
         displayName: name, avatarUrl: info.picture || null,
-        glade: { create: {} }, providers: { create: { provider: "GOOGLE", providerUserId } },
+        glade: { create: {} }, initialProvider: "GOOGLE", providers: { create: { provider: "GOOGLE", providerUserId } },
       },
       include: { glade: true },
     });
@@ -190,7 +190,7 @@ app.post("/auth/google/callback", async (req, res) => {
     }
     if (!user) {
       isNew = true;
-      user = await prisma.user.create({ data: { email: email || ("google_" + providerUserId + "@glowbloom.local"), emailVerified: info.email_verified === "true" || info.email_verified === true || !!email, displayName: name, avatarUrl: info.picture || null, glade: { create: {} }, providers: { create: { provider: "GOOGLE", providerUserId } } }, include: { glade: true } });
+      user = await prisma.user.create({ data: { email: email || ("google_" + providerUserId + "@glowbloom.local"), emailVerified: info.email_verified === "true" || info.email_verified === true || !!email, displayName: name, avatarUrl: info.picture || null, glade: { create: {} }, initialProvider: "GOOGLE", providers: { create: { provider: "GOOGLE", providerUserId } } }, include: { glade: true } });
     }
     await logAuth(req, { userId: user.id, event: isNew ? "REGISTER" : "LOGIN", method: "GOOGLE" });
     if (isNew) { await logConsent(req, { userId: user.id, doc: "TERMS" }); await logConsent(req, { userId: user.id, doc: "PRIVACY" }); }

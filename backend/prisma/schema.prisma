@@ -37,6 +37,7 @@ model User {
 
   marketingConsent Boolean @default(false)
 
+  initialProvider Provider?   // the auth method used at first registration
   providers AuthProvider[]
   scores    Score[]
   glade     Glade?
@@ -137,45 +138,3 @@ model VerificationCode {
 }
 
 // ---------------------------------------------------------------------------
-// Glowbloom game data
-// ---------------------------------------------------------------------------
-
-enum GameMode {
-  JOURNEY
-  DAILY
-  BLOOMSTORM
-  ZEN
-}
-
-model Score {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  mode       GameMode @default(JOURNEY)
-  light      Int      // "light" earned (the in-game score)
-  level      Int      @default(1)
-  maxRadiance Float   @default(1)
-  dailySeed  String?  // set for DAILY mode entries
-  createdAt  DateTime @default(now())
-
-  @@index([userId])
-  @@index([mode, dailySeed])
-}
-
-// The persistent personal garden that grows with light earned.
-model Glade {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  totalLight Int     @default(0)
-  floraJson String   @default("[]") // serialized list of planted flora
-  updatedAt DateTime @updatedAt
-}
-
-// The shared daily puzzle (same seed for everyone) feeding the daily leaderboard.
-model DailyPattern {
-  id        String   @id @default(cuid())
-  date      DateTime @unique @db.Date
-  seed      String
-  createdAt DateTime @default(now())
-}

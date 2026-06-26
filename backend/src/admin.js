@@ -69,7 +69,7 @@ router.get("/overview", requireAdmin, async (req, res) => {
   try {
     const users = await prisma.user.count();
     const verified = await prisma.user.count({ where: { emailVerified: true } });
-    const recentUsers = await prisma.user.findMany({ orderBy: { createdAt: "desc" }, take: 10, select: { email: true, displayName: true, createdAt: true, emailVerified: true } });
+    const recentUsers = await prisma.user.findMany({ orderBy: { createdAt: "desc" }, take: 10, select: { email: true, displayName: true, createdAt: true, emailVerified: true, initialProvider: true } });
     const recentAuth = await prisma.authLog.findMany({ orderBy: { createdAt: "desc" }, take: 15, select: { event: true, method: true, ip: true, platform: true, createdAt: true } });
     res.json({ users, verified, recentUsers, recentAuth });
   } catch (e) { res.json({ users: 0, verified: 0, recentUsers: [], recentAuth: [], error: "db_unavailable" }); }

@@ -109,6 +109,9 @@ input,.ccode{padding:clamp(6px,1.1vh,9px) 11px;font-size:clamp(12px,1.7vh,13.5px
 .card{padding:clamp(8px,1.5vh,15px) clamp(12px,3.5vw,18px);}
 .brand img{height:clamp(23px,3.9vh,34px);}
 .tagline{font-size:clamp(9px,1.35vh,12px);}
+/* center the topbar title regardless of side button widths */
+.topbar{position:relative;}
+.topbar .t{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;}
 /* ---- center-align everything: text, inputs, buttons ---- */
 .screen.active{text-align:center;}
 label{text-align:center;}
@@ -132,7 +135,7 @@ input::placeholder{text-align:center;}
 #board{
   flex:0 0 auto;
   aspect-ratio:1/1;
-  width:min(100%, calc(100dvh - 350px));
+  width:min(94vw, calc(100dvh - 330px));
   max-width:100%;
   margin:clamp(4px,1vh,10px) auto;
   gap:clamp(6px,1.4vh,10px);

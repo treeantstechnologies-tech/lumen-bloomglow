@@ -10,10 +10,10 @@
   .wrap{max-width:860px;margin:0 auto;}
   h1{font-size:22px;font-weight:800;background:linear-gradient(90deg,#FFB347,#FF7AC6,#7C9BFF);-webkit-background-clip:text;background-clip:text;color:transparent;}
   .sub{color:#9aa3c7;font-size:13px;margin-top:2px;margin-bottom:18px;}
-  .card{background:linear-gradient(180deg,rgba(30,38,82,.55),rgba(12,16,36,.6));border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:18px 18px;margin-bottom:16px;box-shadow:0 16px 44px rgba(0,0,0,.4);}
+  .card{background:linear-gradient(180deg,rgba(30,38,82,.55),rgba(12,16,36,.6));border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 16px 44px rgba(0,0,0,.4);}
   .card h2{font-size:15px;margin-bottom:12px;}
   label{display:block;font-size:12px;color:#9aa3c7;margin:10px 0 4px;}
-  input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#fff;font-size:14px;}
+  input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#fff;font-size:14px;}
   input::placeholder{color:#7e87a8;}
   .row{display:flex;gap:12px;flex-wrap:wrap;}
   .row>div{flex:1;min-width:220px;}
@@ -40,52 +40,47 @@
   .hidden{display:none;}
   .badge{font-size:11px;padding:2px 7px;border-radius:10px;}
   .badge.y{background:rgba(123,224,192,.18);color:#7BE0C0;} .badge.n{background:rgba(255,180,71,.18);color:#FFC36B;}
-  code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:5px;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Glowbloom Admin</h1>
-  <div class="sub">TreeAnts Technologies — email configuration &amp; diagnostics</div>
+  <div class="sub">TreeAnts Technologies — configuration &amp; diagnostics</div>
 
-  <!-- LOGIN -->
   <div id="loginCard" class="card">
     <h2>Sign in</h2>
     <label>Admin email</label>
     <input id="aEmail" type="email" placeholder="admin@niytri.com" autocomplete="username"/>
     <label>Password</label>
-    <input id="aPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+    <input id="aPass" type="password" placeholder="********" autocomplete="current-password"/>
     <button class="btn" onclick="login()">Sign in</button>
     <div id="loginOut" class="out"></div>
   </div>
 
-  <!-- DASHBOARD -->
   <div id="dash" class="hidden">
     <div class="tabs">
       <button class="on" data-t="email" onclick="tab('email')">Email config</button>
       <button data-t="test" onclick="tab('test')">Test email</button>
       <button data-t="overview" onclick="tab('overview')">Overview</button>
+      <button data-t="messages" onclick="tab('messages')">Messages</button>
       <button class="alt" style="margin-left:auto;padding:8px 14px" onclick="logout()">Log out</button>
     </div>
 
-    <!-- EMAIL CONFIG -->
     <div id="t-email" class="card">
       <h2>Email delivery</h2>
       <label>Provider</label>
-      <select id="cProvider" onchange="toggleProvider()" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#fff;font-size:14px;">
+      <select id="cProvider" onchange="toggleProvider()">
         <option value="graph">Microsoft 365 / Graph (primary)</option>
         <option value="ses">Amazon SES (optional)</option>
       </select>
-      <div class="muted" style="margin-top:8px;">Status: <span id="cfgStatus">…</span></div>
-
+      <div class="muted" style="margin-top:8px;">Status: <span id="cfgStatus">...</span></div>
       <div id="sesFields">
         <div class="row">
           <div><label>AWS region</label><input id="cSesRegion" placeholder="ap-south-1"/></div>
           <div><label>From address (verified SES identity)</label><input id="cSesFrom" placeholder="no-reply@niytri.com"/></div>
         </div>
-        <div class="muted" style="margin-top:8px;">SES uses the EC2 instance IAM role for credentials. The From address (or its domain) must be a <b>verified identity</b> in SES, and the account needs <b>production access</b> to email arbitrary recipients.</div>
+        <div class="muted" style="margin-top:8px;">SES uses the EC2 instance IAM role. The From address (or its domain) must be a verified identity, and the account needs production access.</div>
       </div>
-
       <div id="graphFields" style="display:none;">
         <div class="pillrow" id="srcPills"></div>
         <div class="row">
@@ -93,32 +88,29 @@
           <div><label>Client ID</label><input id="cClient" placeholder="application (client) id"/></div>
         </div>
         <div class="row">
-          <div><label>Sender mailbox</label><input id="cSender" placeholder="admin@niytri.com (licensed mailbox)"/></div>
+          <div><label>Sender mailbox</label><input id="cSender" placeholder="admin@niytri.com"/></div>
           <div><label>Client secret <span class="muted">(blank = keep current)</span></label><input id="cSecret" type="password" placeholder="paste the secret VALUE (not the ID)"/></div>
         </div>
       </div>
-
       <button class="btn" onclick="saveConfig()">Save configuration</button>
-      <div class="muted" style="margin-top:8px;">Saved settings apply immediately — no server restart needed. Secrets are stored on the server only and never shown back.</div>
+      <div class="muted" style="margin-top:8px;">Saved settings apply immediately — no restart. Secrets are stored server-side and never shown back.</div>
       <div id="cfgOut" class="out"></div>
     </div>
 
-    <!-- TEST EMAIL -->
     <div id="t-test" class="card hidden">
       <h2>Send a test email</h2>
       <label>Recipient</label>
       <input id="testTo" type="email" placeholder="you@example.com"/>
       <button class="btn" onclick="sendTest()">Send test</button>
-      <div class="muted" style="margin-top:8px;">The test is saved to the sender's <b>Sent Items</b>, so you can confirm it actually left even if it lands in spam. Any Graph error is shown in full below.</div>
+      <div class="muted" style="margin-top:8px;">Saved to the sender's Sent Items so you can confirm it left even if it lands in spam. Full error shown below on failure.</div>
       <div id="testOut" class="out"></div>
     </div>
 
-    <!-- OVERVIEW -->
     <div id="t-overview" class="card hidden">
       <h2>Overview</h2>
       <div style="margin:6px 0 14px">
-        <span class="stat"><b id="ovUsers">–</b><span class="muted">Total users</span></span>
-        <span class="stat"><b id="ovVerified">–</b><span class="muted">Email verified</span></span>
+        <span class="stat"><b id="ovUsers">-</b><span class="muted">Total users</span></span>
+        <span class="stat"><b id="ovVerified">-</b><span class="muted">Email verified</span></span>
       </div>
       <h2 style="margin-top:6px">Recent registrations</h2>
       <table><thead><tr><th>Name</th><th>Email</th><th>Verified</th><th>When</th></tr></thead><tbody id="ovUsersTbl"></tbody></table>
@@ -126,12 +118,20 @@
       <table><thead><tr><th>Event</th><th>Method</th><th>Platform</th><th>IP</th><th>When</th></tr></thead><tbody id="ovAuthTbl"></tbody></table>
       <div id="ovOut" class="out"></div>
     </div>
+
+    <div id="t-messages" class="card hidden">
+      <h2>Alert messages</h2>
+      <div class="muted" style="margin-bottom:12px;">Edit any user-facing alert text shown in the app. New alerts added to the app appear here automatically. Clear a box and Save to reset it to the default.</div>
+      <div id="msgList"></div>
+      <div id="msgOut" class="out"></div>
+    </div>
   </div>
 </div>
 
 <script>
   var TOKEN = localStorage.getItem('gb_admin_token') || null;
   function id(x){return document.getElementById(x);}
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   async function api(path, opts){
     opts = opts || {};
     var headers = {'Content-Type':'application/json'};
@@ -143,37 +143,34 @@
   function showOut(elId, ok, msg){ var e = id(elId); e.className = 'out ' + (ok?'ok':'err'); e.textContent = msg; }
 
   async function login(){
-    var email = id('aEmail').value.trim(), password = id('aPass').value;
-    var r = await api('/login', {method:'POST', body:{email:email, password:password}});
+    var r = await api('/login', {method:'POST', body:{email:id('aEmail').value.trim(), password:id('aPass').value}});
     if(!r.ok){ showOut('loginOut', false, r.data.error==='admin_password_not_set' ? (r.data.hint||'Admin password not set on server.') : 'Invalid email or password.'); return; }
-    TOKEN = r.data.token; localStorage.setItem('gb_admin_token', TOKEN);
-    enterDash();
+    TOKEN = r.data.token; localStorage.setItem('gb_admin_token', TOKEN); enterDash();
   }
   function logout(){ TOKEN=null; localStorage.removeItem('gb_admin_token'); id('dash').classList.add('hidden'); id('loginCard').classList.remove('hidden'); }
-
   function enterDash(){ id('loginCard').classList.add('hidden'); id('dash').classList.remove('hidden'); loadConfig(); }
+
   function tab(t){
-    ['email','test','overview'].forEach(function(x){ id('t-'+x).classList.toggle('hidden', x!==t); });
+    ['email','test','overview','messages'].forEach(function(x){ id('t-'+x).classList.toggle('hidden', x!==t); });
     document.querySelectorAll('.tabs button[data-t]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-t')===t); });
     if(t==='overview') loadOverview();
+    if(t==='messages') loadMessages();
   }
-
   function toggleProvider(){
     var p = id('cProvider').value;
     id('sesFields').style.display = (p==='ses')?'block':'none';
     id('graphFields').style.display = (p==='graph')?'block':'none';
   }
+
   async function loadConfig(){
     var r = await api('/config');
     if(r.status===401){ logout(); return; }
     var d = r.data;
     id('cProvider').value = d.provider || 'graph';
-    id('cfgStatus').innerHTML = d.ready
-      ? '<span style="color:#7BE0C0">ready ✓ ('+(d.provider==='ses'?'Amazon SES':'Microsoft Graph')+')</span>'
-      : '<span style="color:#FFC36B">not ready — complete the fields below</span>';
+    id('cfgStatus').innerHTML = d.ready ? '<span style="color:#7BE0C0">ready (' + (d.provider==='ses'?'Amazon SES':'Microsoft Graph') + ')</span>' : '<span style="color:#FFC36B">not ready — complete the fields below</span>';
     id('cSesRegion').value = d.sesRegion||''; id('cSesFrom').value = d.sesFrom||'';
     id('cTenant').value = d.tenantId||''; id('cClient').value = d.clientId||''; id('cSender').value = d.sender||'';
-    id('cSecret').placeholder = d.secretSet ? ('current: '+d.secretMasked+' — leave blank to keep') : 'paste the secret VALUE (not the ID)';
+    id('cSecret').placeholder = d.secretSet ? ('current: '+d.secretMasked+' - leave blank to keep') : 'paste the secret VALUE (not the ID)';
     var s = d.source||{}; var pills='';
     [['Tenant',s.tenant],['Client',s.client],['Secret',s.secret],['Sender',s.sender]].forEach(function(p){
       pills += '<span class="pill '+(p[1]||'unset')+'">'+p[0]+': '+(p[1]||'unset')+'</span>';
@@ -187,18 +184,63 @@
     var r = await api('/config', {method:'POST', body:body});
     if(!r.ok){ showOut('cfgOut', false, 'Save failed ('+r.status+').'); return; }
     id('cSecret').value='';
-    showOut('cfgOut', true, 'Saved. ' + (r.data.ready?('Email is ready via '+(r.data.provider==='ses'?'Amazon SES':'Microsoft Graph')+'.'):'Still not ready — complete the remaining fields.'));
+    showOut('cfgOut', true, 'Saved. ' + (r.data.ready?('Email is ready via '+(r.data.provider==='ses'?'Amazon SES':'Microsoft Graph')+'.'):'Still not ready - complete the remaining fields.'));
     loadConfig();
   }
 
   async function sendTest(){
     var to = id('testTo').value.trim(); if(!to){ showOut('testOut', false, 'Enter a recipient.'); return; }
-    showOut('testOut', true, 'Sending…');
-    var r = await api('/test-email', {method:'POST', body:{to:to}});
-    var d = r.data || {};
-    if(d.ok){ showOut('testOut', true, 'Accepted by Microsoft Graph (HTTP '+d.status+') from '+d.sender+'.\nCheck '+to+' (and the sender\'s Sent Items). If it is not in the inbox or spam, the issue is mailbox/licensing or mail-flow — run a Message Trace.'); }
+    showOut('testOut', true, 'Sending...');
+    var d = (await api('/test-email', {method:'POST', body:{to:to}})).data || {};
+    if(d.ok){ showOut('testOut', true, 'Accepted by the provider (HTTP '+d.status+') from '+d.sender+'.\nCheck '+to+' and the sender Sent Items. If not in inbox or spam, it is a mailbox/licensing or mail-flow issue - run a Message Trace.'); }
     else {
       var detail = typeof d.detail==='string' ? d.detail : JSON.stringify(d.detail, null, 2);
       var hint = '';
-      if(d.stage==='config') hint='\n\nFill in all four fields in the Email config tab.';
-      else i
+      if(d.stage==='config') hint='\n\nFill in all fields in the Email config tab.';
+      else if(d.stage==='token') hint='\n\nToken failed -> wrong tenant/client id, or the secret is the ID not the Value.';
+      else if(d.status===403) hint='\n\n403 -> grant admin consent for the Mail.Send application permission in Azure.';
+      else if(d.status===404) hint='\n\n404 -> sender mailbox does not exist / has no Exchange Online license.';
+      showOut('testOut', false, 'FAILED at "'+d.stage+'"'+(d.status?(' (HTTP '+d.status+')'):'')+':\n'+detail+hint);
+    }
+  }
+
+  async function loadOverview(){
+    var r = await api('/overview');
+    if(r.status===401){ logout(); return; }
+    var d = r.data||{};
+    id('ovUsers').textContent = d.users!=null?d.users:'-';
+    id('ovVerified').textContent = d.verified!=null?d.verified:'-';
+    id('ovUsersTbl').innerHTML = (d.recentUsers||[]).map(function(u){
+      return '<tr><td>'+escapeHtml(u.displayName||'-')+'</td><td>'+escapeHtml(u.email)+'</td><td><span class="badge '+(u.emailVerified?'y':'n')+'">'+(u.emailVerified?'yes':'no')+'</span></td><td>'+new Date(u.createdAt).toLocaleString()+'</td></tr>';
+    }).join('') || '<tr><td colspan="4" class="muted">No users yet.</td></tr>';
+    id('ovAuthTbl').innerHTML = (d.recentAuth||[]).map(function(a){
+      return '<tr><td>'+a.event+'</td><td>'+(a.method||'-')+'</td><td>'+(a.platform||'-')+'</td><td>'+(a.ip||'-')+'</td><td>'+new Date(a.createdAt).toLocaleString()+'</td></tr>';
+    }).join('') || '<tr><td colspan="5" class="muted">No events yet.</td></tr>';
+    if(d.error) showOut('ovOut', false, 'Database unavailable - stats may be empty.');
+  }
+
+  async function loadMessages(){
+    var r = await api('/messages');
+    if(r.status===401){ logout(); return; }
+    var rows = (r.data && r.data.messages) || [];
+    id('msgList').innerHTML = rows.map(function(m){
+      return '<div style="margin-bottom:14px">'
+        + '<label style="display:block;margin:0 0 4px;color:#9aa3c7;font-size:12px">' + m.key
+          + (m.overridden ? ' <span style="color:#7BE0C0">(custom)</span>' : ' <span class="muted">(default)</span>') + '</label>'
+        + '<div style="display:flex;gap:8px">'
+        + '<input id="msg_' + m.key + '" value="' + escapeHtml(m.current) + '" style="flex:1"/>'
+        + '<button class="btn" style="margin:0;padding:9px 14px" onclick="saveMessage(\'' + m.key + '\')">Save</button>'
+        + '</div></div>';
+    }).join('') || '<div class="muted">No messages registered.</div>';
+  }
+  async function saveMessage(key){
+    var r = await api('/messages', {method:'POST', body:{key:key, text:id('msg_'+key).value}});
+    if(!r.ok){ showOut('msgOut', false, 'Save failed.'); return; }
+    showOut('msgOut', true, 'Saved "'+key+'". Changes are live immediately.');
+    loadMessages();
+  }
+
+  if(TOKEN){ enterDash(); }
+</script>
+</body>
+</html>

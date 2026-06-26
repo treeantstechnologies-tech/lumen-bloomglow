@@ -86,7 +86,7 @@ body{
   display:flex;flex-direction:column;overflow:hidden;
   padding:clamp(10px,1.7vh,15px) clamp(12px,3.5vw,18px);
 }
-.screen.active{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;height:100%;overflow:auto;}
+.screen.active{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;height:100%;overflow:hidden;}
 .screen:not(.active){display:none !important;}
 #toastWrap{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:10px;width:min(360px,92vw);}
 .toast{position:relative;background:linear-gradient(180deg,rgba(38,46,96,.98),rgba(20,26,58,.98));border:1px solid rgba(255,255,255,.14);border-left:4px solid #7C5BFF;border-radius:12px;padding:12px 40px 12px 14px;color:#EEF1FA;font-size:13.5px;line-height:1.5;box-shadow:0 14px 40px rgba(0,0,0,.5);animation:toastIn .25s ease;}
@@ -96,6 +96,26 @@ body{
 .toast .tx:hover{color:#fff;background:rgba(255,255,255,.08);}
 .toast.hide{opacity:0;transform:translateY(8px);transition:opacity .25s ease,transform .25s ease;}
 @keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+/* ---- compact controls so the tallest screen (register) fits with NO scroll ---- */
+label{margin:clamp(3px,0.8vh,9px) 0 3px;font-size:clamp(10px,1.5vh,12px);}
+input,.ccode{padding:clamp(6px,1.1vh,9px) 11px;font-size:clamp(12px,1.7vh,13.5px);}
+.social{gap:clamp(5px,1vh,8px);margin-top:clamp(7px,1.5vh,16px);}
+.sbtn{padding:clamp(7px,1.25vh,9px);font-size:clamp(12px,1.7vh,13.5px);}
+#gbtn-login,#gbtn-reg{margin-bottom:clamp(2px,0.7vh,8px)!important;}
+.divider{margin:clamp(5px,1vh,12px) 0 4px;font-size:clamp(10px,1.4vh,11.5px);}
+.agree{margin:clamp(5px,1vh,12px) 0 2px;font-size:clamp(10px,1.35vh,11.5px);}
+.note{margin-top:clamp(6px,1.2vh,12px);font-size:clamp(10px,1.4vh,12px);}
+.btn{margin-top:clamp(7px,1.4vh,14px);padding:clamp(8px,1.35vh,10px);}
+.card{padding:clamp(8px,1.5vh,15px) clamp(12px,3.5vw,18px);}
+.brand img{height:clamp(23px,3.9vh,34px);}
+.tagline{font-size:clamp(9px,1.35vh,12px);}
+/* ---- center-align everything: text, inputs, buttons ---- */
+.screen.active{text-align:center;}
+label{text-align:center;}
+input,.ccode,select,#otp{text-align:center;}
+input::placeholder{text-align:center;}
+.agree{justify-content:center;text-align:center;}
+.row2,.phonerow{justify-content:center;}
 .footer{flex:0 0 auto;margin-top:clamp(6px,1.3vh,10px);padding-bottom:0;}
 .footer img{height:clamp(15px,2.2vh,19px);}
 
@@ -295,6 +315,11 @@ body{
     b.onclick=go;
   }
   window.toast=toast;
+  var DEF={google_fail:"Google sign-in failed. Please try again.",terms_accept:"Please accept the Terms & Privacy Policy to continue.",enter_email:"Enter your email",not_registered:"You are not registered yet \u2014 please create your account first, then you can log in.",email_required:"Email is required",enter_code:"Enter the code",invalid_code:"Invalid or expired code"};
+  var MSG={};
+  function M(k){ return (MSG&&MSG[k])||DEF[k]||k; }
+  window.M=M;
+  try{ fetch('/messages').then(function(r){return r.json();}).then(function(j){ if(j&&typeof j==='object') MSG=j; }).catch(function(){}); }catch(e){}
   // ---- account ----
   var account={email:'',mobile:'',minor:false,name:'player'};
   var TOKEN=localStorage.getItem('gb_token')||null; var me=null;
@@ -307,7 +332,7 @@ body{
   var GOOGLE_CLIENT_ID='318258264454-k63f3lnpmio66dv3eu7g0irvjljf1du7.apps.googleusercontent.com';
   window.onGoogleCredential=async function(resp){
     var r=await api('/auth/google',{method:'POST',body:{credential:resp.credential,platform:'web',acceptedTerms:true}});
-    if(!r.ok){ toast('Google sign-in failed. Please try again.'); return; }
+    if(!r.ok){ toast(M('google_fail')); return; }
     setToken(r.data.token); me=r.data.user||null;
     if(me&&me.displayName){ account.name=me.displayName; id('who').textContent=account.name; }
     loadStats(); show('s-home');
@@ -319,12 +344,12 @@ body{
   }
   gInit();
 
-  function agreed(){var a=document.getElementById('agree'); if(a&&!a.checked){toast('Please accept the Terms & Privacy Policy to continue.');return false;} return true;}
+  function agreed(){var a=document.getElementById('agree'); if(a&&!a.checked){toast(M('terms_accept'));return false;} return true;}
   var otpFrom='s-reg';
   window.backFromOtp=function(){ show(otpFrom||'s-reg'); };
-  window.loginStart=async function(){ otpFrom='s-login'; var em=((id('lemail').value)||'').trim(); if(!em){toast('Enter your email');return;} var ex=await api('/auth/email/exists?email='+encodeURIComponent(em)); if(ex.ok&&ex.data&&ex.data.exists===false){ var _re=document.getElementById('email'); if(_re)_re.value=em; toast('You are not registered yet \u2014 please create your account first, then you can log in.'); show('s-reg'); return; } account.email=em; account.name=toTitle(em.split('@')[0]); id('who').textContent=account.name; account.minor=false; id('otpTo').textContent='Code sent to '+em; id('demoRow').style.display='none'; id('otp').value=''; id('kidsNote').style.display='none'; show('s-otp'); var r=await api('/auth/email/start',{method:'POST',body:{email:em}}); if(!r.ok){id('demoRow').style.display='block';id('demoCode').textContent='(send failed)';return;} if(r.data.devCode){id('demoRow').style.display='block';id('demoCode').textContent=r.data.devCode;id('otp').value=r.data.devCode;} };
+  window.loginStart=async function(){ otpFrom='s-login'; var em=((id('lemail').value)||'').trim(); if(!em){toast(M('enter_email'));return;} var ex=await api('/auth/email/exists?email='+encodeURIComponent(em)); if(ex.ok&&ex.data&&ex.data.exists===false){ var _re=document.getElementById('email'); if(_re)_re.value=em; toast(M('not_registered')); show('s-reg'); return; } account.email=em; account.name=toTitle(em.split('@')[0]); id('who').textContent=account.name; account.minor=false; id('otpTo').textContent='Code sent to '+em; id('demoRow').style.display='none'; id('otp').value=''; id('kidsNote').style.display='none'; show('s-otp'); var r=await api('/auth/email/start',{method:'POST',body:{email:em}}); if(!r.ok){id('demoRow').style.display='block';id('demoCode').textContent='(send failed)';return;} if(r.data.devCode){id('demoRow').style.display='block';id('demoCode').textContent=r.data.devCode;id('otp').value=r.data.devCode;} };
   window.sendCode=async function(){ if(!agreed())return;
-    var em=(id('email').value||'').trim(); if(!em){toast('Email is required');return;} account.email=em;
+    var em=(id('email').value||'').trim(); if(!em){toast(M('email_required'));return;} account.email=em;
     var _n=(id('mobile').value||'').trim(); account.mobile=_n?(id('ccode').value+' '+_n):'';
     var y=parseInt(id('byear').value||'2000',10); account.byear=y; account.minor=(new Date().getFullYear()-y)<18;
     var _fn=((id('fname')&&id('fname').value)||'').trim(),_ln=((id('lname')&&id('lname').value)||'').trim();account.name=toTitle((_fn+' '+_ln).trim())||toTitle(em.split('@')[0]); id('who').textContent=account.name;
@@ -335,7 +360,7 @@ body{
     if(!r.ok){id('demoRow').style.display='block';id('demoCode').textContent='(send failed)';return;}
     if(r.data.devCode){id('demoRow').style.display='block';id('demoCode').textContent=r.data.devCode;id('otp').value=r.data.devCode;}
   };
-  window.verify=async function(){ var code=(id('otp').value||'').trim(); if(!code){toast('Enter the code');return;} var r=await api('/auth/email/verify',{method:'POST',body:{email:account.email,code:code,displayName:account.name,birthYear:account.byear,acceptedTerms:true,platform:'web'}}); if(!r.ok){toast('Invalid or expired code');return;} setToken(r.data.token); me=r.data.user||null; if(me&&me.displayName){account.name=me.displayName;id('who').textContent=account.name;} loadStats(); show(otpFrom==='s-login'?'s-home':'s-onb'); };
+  window.verify=async function(){ var code=(id('otp').value||'').trim(); if(!code){toast(M('enter_code'));return;} var r=await api('/auth/email/verify',{method:'POST',body:{email:account.email,code:code,displayName:account.name,birthYear:account.byear,acceptedTerms:true,platform:'web'}}); if(!r.ok){toast(M('invalid_code'));return;} setToken(r.data.token); me=r.data.user||null; if(me&&me.displayName){account.name=me.displayName;id('who').textContent=account.name;} loadStats(); show(otpFrom==='s-login'?'s-home':'s-onb'); };
   window.enterApp=function(){ refreshHome(); show('s-home'); };
   function refreshHome(){ id('hsLevel').textContent=best.level; id('hsScore').textContent=best.score; id('hsLight').textContent=best.light; id('hsRuns').textContent=best.runs; }
   window.exitApp=function(){ id('exLight').textContent=session.light; id('exLevel').textContent=best.level; stopCountdown(); show('s-exit'); };

@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const store = require("./config-store");
 const mailer = require("./mailer");
 const ses = require("./ses");
+const messages = require("./messages");
 const { getPrisma } = require("./prisma");
 
 const router = express.Router();
@@ -72,6 +73,18 @@ router.get("/overview", requireAdmin, async (req, res) => {
     const recentAuth = await prisma.authLog.findMany({ orderBy: { createdAt: "desc" }, take: 15, select: { event: true, method: true, ip: true, platform: true, createdAt: true } });
     res.json({ users, verified, recentUsers, recentAuth });
   } catch (e) { res.json({ users: 0, verified: 0, recentUsers: [], recentAuth: [], error: "db_unavailable" }); }
+});
+
+router.get("/messages", requireAdmin, (req, res) => {
+  res.json({ messages: messages.list() });
+});
+
+router.post("/messages", requireAdmin, (req, res) => {
+  const { key, text } = req.body || {};
+  if (!key) return res.status(400).json({ error: "key_required" });
+  const ok = messages.save(key, text);
+  if (!ok) return res.status(400).json({ error: "unknown_key" });
+  res.json({ ok: true, messages: messages.list() });
 });
 
 module.exports = router;

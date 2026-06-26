@@ -14,6 +14,7 @@ const TERMS_VERSION = process.env.TERMS_VERSION || "1.0";
 
 app.use(cors({ origin: (process.env.CORS_ORIGIN || "*").split(",") }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "..", "public")));
 app.use("/admin", require("./admin")); // admin module API
@@ -166,6 +167,35 @@ app.post("/auth/google", async (req, res) => {
   await logAuth(req, { userId: user.id, event: isNew ? "REGISTER" : "LOGIN", method: "GOOGLE" });
   if (isNew && acceptedTerms) { await logConsent(req, { userId: user.id, doc: "TERMS" }); await logConsent(req, { userId: user.id, doc: "PRIVACY" }); }
   res.json({ token: signToken(user), user: publicUser(user), isNew, kidsMode: user.isMinor, termsVersion: TERMS_VERSION });
+});
+
+app.post("/auth/google/callback", async (req, res) => {
+  try {
+    const credential = (req.body && req.body.credential) || "";
+    if (!credential) return res.redirect("/#gerror=1");
+    const vr = await fetch("https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(credential));
+    const info = await vr.json();
+    if (!vr.ok || !info || !info.sub) return res.redirect("/#gerror=1");
+    const expected = process.env.GOOGLE_CLIENT_ID;
+    if (expected && info.aud !== expected) return res.redirect("/#gerror=1");
+    const providerUserId = info.sub;
+    const email = (info.email || "").toLowerCase();
+    const name = info.name || (email ? email.split("@")[0] : "Player");
+    let user = null, isNew = false;
+    const link = await prisma.authProvider.findUnique({ where: { provider_providerUserId: { provider: "GOOGLE", providerUserId } }, include: { user: { include: { glade: true } } } }).catch(() => null);
+    if (link) user = link.user;
+    if (!user && email) {
+      user = await prisma.user.findUnique({ where: { email }, include: { glade: true } }).catch(() => null);
+      if (user) await prisma.authProvider.create({ data: { userId: user.id, provider: "GOOGLE", providerUserId } }).catch(() => {});
+    }
+    if (!user) {
+      isNew = true;
+      user = await prisma.user.create({ data: { email: email || ("google_" + providerUserId + "@glowbloom.local"), emailVerified: info.email_verified === "true" || info.email_verified === true || !!email, displayName: name, avatarUrl: info.picture || null, glade: { create: {} }, providers: { create: { provider: "GOOGLE", providerUserId } } }, include: { glade: true } });
+    }
+    await logAuth(req, { userId: user.id, event: isNew ? "REGISTER" : "LOGIN", method: "GOOGLE" });
+    if (isNew) { await logConsent(req, { userId: user.id, doc: "TERMS" }); await logConsent(req, { userId: user.id, doc: "PRIVACY" }); }
+    return res.redirect("/#gtoken=" + encodeURIComponent(signToken(user)));
+  } catch (e) { return res.redirect("/#gerror=1"); }
 });
 
 app.post("/auth/mobile/start", requireAuth, async (req, res) => {

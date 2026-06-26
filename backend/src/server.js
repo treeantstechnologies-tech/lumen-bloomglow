@@ -13,6 +13,9 @@ app.use(cors({ origin: (process.env.CORS_ORIGIN || "*").split(",") }));
 app.use(express.json());
 app.use(morgan("dev"));
 
+// Serve the playable web demo at "/" (files in backend/public).
+app.use(express.static(require("path").join(__dirname, "..", "public")));
+
 app.get("/health", (req, res) => {
   res.json({ ok: true, service: "glowbloom-backend", version: "0.1.0", time: new Date().toISOString() });
 });

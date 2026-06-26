@@ -1,50 +1,34 @@
-# Glowbloom — Deployment guide (local + GitHub + AWS)
+# Glowbloom — Deployment guide (local + GitHub + AWS EC2, no Docker)
 
 Full project path on your laptop:
 `D:\sachin b\projects\Project Lumen - GlowBloom\glowbloom`
 
 What deploys where:
-- Backend API (Node + Express + Prisma) -> AWS (Docker on EC2).
-- PostgreSQL -> your managed DB (the DATABASE_URL you put in backend/.env). Keep it as-is.
-- Mobile app (Flutter) -> Google Play / App Store (separate; not on AWS).
-- Optional Flutter web build -> can be hosted on the same EC2 behind nginx.
+- Backend API (Node + Express + Prisma) -> AWS EC2, run with PM2 behind nginx.
+- PostgreSQL -> your managed DB (the DATABASE_URL in backend/.env). Unchanged.
+- Mobile app (Flutter) -> Google Play / App Store (separate).
+- Multiple apps share one EC2: each app is its own PM2 process on its own port,
+  and nginx routes each domain/subdomain to the right port. Glowbloom uses port 4000.
 
 ---
 
 ## A. Run locally (Windows PowerShell)
 
-### A1. Backend
-First, allow local scripts once (fixes "npm.ps1/npx.ps1 cannot be loaded" and also unblocks Flutter):
+Allow local scripts once (fixes "npm.ps1/npx.ps1 cannot be loaded", also unblocks Flutter):
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned   # press Y
 ```
-Then:
+Backend:
 ```powershell
 cd "D:\sachin b\projects\Project Lumen - GlowBloom\glowbloom\backend"
-# .env already has your DATABASE_URL
 npm install
-npx prisma generate         # REQUIRED - creates the Prisma client
+npx prisma generate
 npx prisma migrate dev --name init
 npm run dev
-# API at http://localhost:4000  (open /health to check)
+# API at http://localhost:4000  (open /health)
 ```
-If you skip the policy change, use the .cmd forms: npm.cmd / npx.cmd (e.g. `npx.cmd prisma generate`).
-
-### A2. Smoke-test the backend
-```powershell
-cd "D:\sachin b\projects\Project Lumen - GlowBloom\glowbloom\backend"
-bash scripts/smoke.sh
-```
-
-### A3. The game frontend
-- Instant, no install: double-click
-  `D:\sachin b\projects\Project Lumen - GlowBloom\glowbloom\glowbloom_demo.html`
-- Real Flutter app (after installing Flutter):
-```powershell
-cd "D:\sachin b\projects\Project Lumen - GlowBloom\glowbloom\app"
-powershell -ExecutionPolicy Bypass -File setup.ps1
-flutter run -d chrome
-```
+Game frontend: double-click
+`D:\sachin b\projects\Project Lumen - GlowBloom\glowbloom\glowbloom_demo.html`
 
 ---
 
@@ -52,78 +36,133 @@ flutter run -d chrome
 
 ```powershell
 cd "D:\sachin b\projects\Project Lumen - GlowBloom\glowbloom"
-# If a partial .git folder exists from earlier, delete it first:
-#   rmdir /s /q .git
+Remove-Item -Recurse -Force .git    # clears any broken/partial .git
+git config --global user.email "treeantstechnologies@gmail.com"
+git config --global user.name "TreeAnts Technologies"
 git init
 git add .
 git commit -m "Glowbloom v0.1 - game, backend, deploy kit (TreeAnts Technologies)"
 git branch -M main
-git remote add origin https://github.com/treeantstechnologies-tech/lumen-bloomglow.git
+git remote add origin git@github.com:treeantstechnologies-tech/lumen-bloomglow.git
 git push -u origin main
 ```
-`.gitignore` already excludes `.env`, `node_modules/`, build output and signing keys.
+
+### Authenticate with an SSH key (recommended; firm account, no personal login)
+```powershell
+# 1) Create a key on your machine
+ssh-keygen -t ed25519 -C "treeantstechnologies@gmail.com" -f "$env:USERPROFILE\.ssh\id_ed25519"
+# 2) Start the agent and load the key
+Get-Service ssh-agent | Set-Service -StartupType Manual
+Start-Service ssh-agent
+ssh-add "$env:USERPROFILE\.ssh\id_ed25519"
+# 3) Copy the PUBLIC key to clipboard
+Get-Content "$env:USERPROFILE\.ssh\id_ed25519.pub" | Set-Clipboard
+```
+Add the public key to GitHub (pick one):
+- Repo deploy key (scoped to this repo): repo -> Settings -> Deploy keys -> Add deploy key
+  -> paste -> tick "Allow write access". (Cleanest; needs repo admin only.)
+- Account key: sign in as the firm account -> Settings -> SSH and GPG keys -> New SSH key -> paste.
+
+Then test and push over SSH:
+```powershell
+ssh -T git@github.com          # first time: type "yes"; expect a success greeting
+git push -u origin main
+```
+
+### Alternative: username + token over HTTPS (no SSH key)
+GitHub no longer accepts your account password for git — use a Personal Access Token
+as the password.
+```powershell
+# 1) Create a token: GitHub -> Settings -> Developer settings -> Personal access tokens
+#    -> Tokens (classic) -> generate with the "repo" scope -> copy it.
+# 2) Use the HTTPS remote and clear any stale cached login:
+git remote set-url origin https://github.com/treeantstechnologies-tech/lumen-bloomglow.git
+cmdkey /delete:git:https://github.com
+# 3) Push; when prompted enter the firm account username and PASTE THE TOKEN as password.
+git push -u origin main
+```
+The account/username you use must have write access to the repo (collaborator or owner).
 
 ---
 
-## C. Deploy the backend on AWS (EC2 + Docker)
+## C. Deploy on AWS EC2 (no Docker — Node + PM2 + nginx)
 
-### C1. Launch an EC2 instance
-- AMI: Ubuntu Server 22.04 LTS. Type: t3.small (or t3.micro to start).
-- Security group inbound rules: allow 22 (SSH), 80 (HTTP), 443 (HTTPS).
-- Make sure your database allows connections from the EC2 instance's IP
-  (if your Postgres is AWS RDS, add the EC2 security group to the RDS security group).
+### C1. Launch / reuse an EC2 instance
+- Ubuntu Server 22.04 LTS, t3.small (or your existing shared box).
+- Security group inbound: 22 (SSH), 80 (HTTP), 443 (HTTPS). Do NOT open 4000 publicly —
+  nginx proxies to it locally.
+- Ensure your Postgres allows connections from the EC2 IP (RDS: add EC2's security group).
 
-### C2. SSH in and install Docker
+### C2. One-time server setup (skip what you already have)
 ```bash
 ssh -i your-key.pem ubuntu@<EC2_PUBLIC_IP>
-sudo apt update && sudo apt install -y docker.io docker-compose-plugin git
-sudo usermod -aG docker ubuntu && newgrp docker
+# Node 20 LTS
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs git nginx
+# PM2 process manager (keeps apps running + restarts on reboot)
+sudo npm install -g pm2
 ```
 
-### C3. Get the code and set env
+### C3. Get the code and configure env
 ```bash
+cd /var/www                      # a common place for app code
+sudo mkdir -p /var/www && sudo chown -R ubuntu:ubuntu /var/www
 git clone https://github.com/treeantstechnologies-tech/lumen-bloomglow.git
-cd lumen-bloomglow
-nano backend/.env     # paste DATABASE_URL, JWT_SECRET (long random), DEV_RETURN_CODES=false, CORS_ORIGIN=*
+cd lumen-bloomglow/backend
+npm install
+npx prisma generate
+nano .env     # DATABASE_URL=..., JWT_SECRET=<long random>, DEV_RETURN_CODES=false, CORS_ORIGIN=*, PORT=4000
+npx prisma migrate deploy        # creates tables on your DB
 ```
 
-### C4. Build and run
+### C4. Run with PM2
 ```bash
-docker compose up -d --build
-docker compose logs -f backend     # watch it start; Ctrl-C to stop watching
-curl http://localhost:4000/health  # should return {"ok":true,...}
+pm2 start ecosystem.config.js
+pm2 save                         # remember running apps
+pm2 startup systemd              # prints a command; run the line it outputs (enables boot start)
+pm2 status                       # glowbloom-api should be "online"
+curl http://localhost:4000/health
 ```
-Migrations run automatically on container start (`prisma migrate deploy`).
+Each additional app you host later: give it a different `name` and `PORT` (4001, 4002, ...)
+in its own ecosystem file, then `pm2 start` it. PM2 runs them all side by side.
 
-### C5. Put nginx in front (clean URL + HTTPS)
+### C5. nginx reverse proxy (one server block per app)
 ```bash
-sudo apt install -y nginx certbot python3-certbot-nginx
-sudo cp deploy/nginx-glowbloom.conf /etc/nginx/sites-available/glowbloom
-# edit the file and set server_name to your domain or the EC2 public DNS
+sudo cp /var/www/lumen-bloomglow/deploy/nginx-glowbloom.conf /etc/nginx/sites-available/glowbloom
+# edit server_name to your domain/subdomain, e.g. glowbloom-api.treeants.example
+sudo nano /etc/nginx/sites-available/glowbloom
 sudo ln -s /etc/nginx/sites-available/glowbloom /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
-# If you pointed a domain at the EC2 IP, enable HTTPS:
-sudo certbot --nginx -d api.yourdomain.com
 ```
-Your API is now at `http://<EC2_PUBLIC_IP>/health` (or `https://api.yourdomain.com/health`).
+For your other apps, add another file in sites-available with its own `server_name`
+and `proxy_pass http://127.0.0.1:<that app's port>` — nginx routes by hostname.
 
-### C6. Point the app at the deployed API
-Build the Flutter app with your API URL:
+### C6. HTTPS (recommended)
+```bash
+sudo apt-get install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d glowbloom-api.treeants.example
+```
+API is now at `https://glowbloom-api.treeants.example/health`.
+
+### C7. Point the mobile app at the live API
 ```powershell
 cd "D:\sachin b\projects\Project Lumen - GlowBloom\glowbloom\app"
-flutter run --dart-define=API_BASE_URL=https://api.yourdomain.com
-# or for a release Android build:
-flutter build appbundle --release --dart-define=API_BASE_URL=https://api.yourdomain.com
+flutter run --dart-define=API_BASE_URL=https://glowbloom-api.treeants.example
+# release Android build:
+flutter build appbundle --release --dart-define=API_BASE_URL=https://glowbloom-api.treeants.example
 ```
 
 ### Updating after a code change
 ```bash
-cd ~/lumen-bloomglow && git pull && docker compose up -d --build
+cd /var/www/lumen-bloomglow && git pull
+cd backend && npm install && npx prisma migrate deploy
+pm2 restart glowbloom-api
 ```
 
 ---
 
 ## What I can and cannot do for you
-I prepared every file and command above, but I cannot push to your GitHub or run
-things inside your AWS account from here (no credentials, and this synced folder
-cannot run git). Run sections B and C from your laptop / the EC2 box and you are live.
+I prepared every file and command above. I cannot push to your GitHub or run commands
+in your AWS account from here (no credentials; this synced folder cannot run git). Run
+sections B and C from your laptop / the EC2 box. The Dockerfile and docker-compose.yml
+are left in the repo as an optional alternative; the PM2 path above is the no-Docker one.

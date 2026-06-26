@@ -125,7 +125,7 @@ input::placeholder{text-align:center;}
 .footer img{height:clamp(15px,2.2vh,19px);}
 
 /* brighter tiles (was opacity .6 -> dull) */
-.bud{opacity:.93;border-color:rgba(255,255,255,.30);box-shadow:inset 0 0 14px rgba(255,255,255,.12),0 6px 16px rgba(0,0,0,.30);}
+.bud{opacity:.93;border:3px solid rgba(255,255,255,.55);box-shadow:inset 0 0 14px rgba(255,255,255,.12),0 6px 16px rgba(0,0,0,.30);}
 .bud.lit{opacity:1;}
 
 /* ---- GAME screen: fit the 3x3 board to the leftover vertical space ---- */
@@ -157,8 +157,8 @@ body{background:radial-gradient(1200px 820px at 50% -8%,#23295c 0%,#171d42 50%,#
 .grad{background:linear-gradient(90deg,#FFD180,#FF9800,#FF6D00)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;}
 .btn{background:linear-gradient(135deg,#FFA726,#FB8C00)!important;box-shadow:0 6px 18px rgba(251,140,0,.45)!important;}
 .btn.alt{background:rgba(255,255,255,.06)!important;box-shadow:none!important;border:1px solid rgba(255,167,38,.4)!important;}
-#buyBtn{background:linear-gradient(135deg,#FFCA28,#FB8C00)!important;}
-.seg button.on,.lbtabs button.on,.tabs button.on{background:linear-gradient(135deg,#FFA726,#FB8C00)!important;color:#fff!important;}
+#buyBtn{background:linear-gradient(135deg,#43C06A,#2E9E4F)!important;box-shadow:0 6px 16px rgba(46,158,79,.5)!important;}
+.seg button.on,.lbtabs button.on,.tabs button.on{background:linear-gradient(135deg,#7C5BFF,#9B6BFF)!important;color:#fff!important;}
 .countbar>i{background:linear-gradient(90deg,#FFB347,#FB8C00)!important;}
 a{color:#FFB74D!important;}
 .divider span{color:#FFB74D;}
@@ -169,6 +169,7 @@ a{color:#FFB74D!important;}
 .sbtn{border:1px solid rgba(255,167,38,.3);}
 .crown{filter:drop-shadow(0 0 5px rgba(255,179,71,.7));}
 input:focus,select:focus{border-color:rgba(255,167,38,.6)!important;}
+#s-onb.active{overflow:auto!important;}
 </style>
 </head>
 
@@ -236,9 +237,16 @@ input:focus,select:focus{border-color:rgba(255,167,38,.6)!important;}
   <!-- 3. ONBOARDING -->
   <div class="screen card" id="s-onb">
     <div class="center" style="font-size:18px;font-weight:700;">How to play</div>
-    <p class="muted" style="margin-top:10px;line-height:1.7;">Watch the glowbuds light up, then tap them back in the same order. Bloom the pattern to earn <b style="color:#7BE0C0">light</b>. String perfect rounds to raise your <b style="color:#FFC36B">Radiance</b> multiplier. Light grows your own garden — the Glade.</p>
+    <div class="muted" style="margin-top:8px;line-height:1.5;text-align:left;font-size:12.5px;">
+      <p style="margin:6px 0">&bull; Watch the glowbuds light up, then <b>tap them back in the same order</b>.</p>
+      <p style="margin:6px 0">&bull; When it is your turn you have <b style="color:#FFB74D">10 seconds</b> to finish the pattern.</p>
+      <p style="margin:6px 0">&bull; A wrong tap <b>or</b> running out of time costs <b>1 Bud</b>. You start with <b>4 Buds</b>.</p>
+      <p style="margin:6px 0">&bull; Clearing a pattern earns <b style="color:#7BE0C0">Light</b>; perfect streaks raise your <b style="color:#FFC36B">Radiance</b> multiplier for even more Light.</p>
+      <p style="margin:6px 0">&bull; Out of Buds? <b>Buy a Bud</b> with Light - cost is level x 10, up to <b>2 per run</b>.</p>
+      <p style="margin:6px 0">&bull; Pick <b>Sargam</b> (Sa Re Ga...), Beeps, or Mute for tap sounds.</p>
+      <p style="margin:6px 0">&bull; Climb the <b>Leaderboard</b>; players tied on level &amp; Light share the same rank.</p>
+    </div>
     <button class="btn" onclick="enterApp()">Start playing</button>
-    <div class="steps"><i></i><i></i><i class="on"></i></div>
   </div>
 
   <!-- 4. HOME -->
@@ -253,6 +261,7 @@ input:focus,select:focus{border-color:rgba(255,167,38,.6)!important;}
     </div>
     <button class="btn" onclick="startGame()">Play · Journey</button>
     <button class="btn alt" onclick="openLeaderboard()">Leaderboards &amp; ranking</button>
+    <button class="btn alt" onclick="show('s-onb')">How to play</button>
     <button class="btn alt" onclick="logout()">Log out</button>
   </div>
 
@@ -443,38 +452,32 @@ input:focus,select:focus{border-color:rgba(255,167,38,.6)!important;}
   var boughtBuds=0,needReset=false,gameOverTimer=null;
   function clearBoardTimer(){if(gameOverTimer){clearTimeout(gameOverTimer);gameOverTimer=null;}}
   function scheduleBoard(){clearBoardTimer();gameOverTimer=setTimeout(function(){openLeaderboard();},5000);}
+  var inputTimer=null;
+  function clearInputTimer(){if(inputTimer){clearInterval(inputTimer);inputTimer=null;}}
+  function startInputTimer(){clearInputTimer();var rem=10;id('status').textContent='Your turn - '+rem+'s';inputTimer=setInterval(function(){rem--;if(rem<=0){clearInputTimer();if(phase==='recall'){wilt();}return;}id('status').textContent='Your turn - '+rem+'s';},1000);}
+  function wilt(){lives--;rad=1;phase='idle';hud();var _cost=level*10,_canBuy=(boughtBuds<2&&score>=_cost);if(lives<=0){endRun();needReset=true;if(_canBuy){id('status').textContent='Out of Buds! Buy a Bud or Play again.';showBtn('Play again');offerBuy(_cost);}else{id('status').textContent='The garden dims. Light: '+score+'.';showBtn('Play again');hideBuy();}scheduleBoard();}else{needReset=false;id('status').textContent='';showBtn('Retry');if(_canBuy)offerBuy(_cost);else hideBuy();}}
   function offerBuy(cost){var b=id('buyBtn');if(b){b.style.display='';b.textContent='Buy a Bud ('+cost+' light)';}}
   function hideBuy(){var b=id('buyBtn');if(b)b.style.display='none';}
-  window.buyBud=function(){clearBoardTimer();var cost=level*10;if(boughtBuds>=2){toast(M('buds_max'));return;}if(score<cost){toast(M('buds_low'));return;}score-=cost;lives++;boughtBuds++;needReset=false;phase='idle';hud();hideBuy();id('status').textContent='Bud restored! '+lives+' left. Tap to continue.';showBtn('Retry');};
+  window.buyBud=function(){clearBoardTimer();clearInputTimer();var cost=level*10;if(boughtBuds>=2){toast(M('buds_max'));return;}if(score<cost){toast(M('buds_low'));return;}score-=cost;lives++;boughtBuds++;needReset=false;phase='idle';hud();hideBuy();id('status').textContent='Bud restored! '+lives+' left. Tap to continue.';showBtn('Retry');};
   function hud(){id('hLevel').textContent=level;id('hScore').textContent=score;id('hRad').textContent='x'+(Math.round(rad*10)/10);id('hLives').textContent=lives;}
   function flash(i,c,ms){els[i].classList.add(c);setTimeout(function(){els[i].classList.remove(c);},ms||450);}
   function showBtn(t){var b=id('btn');if(t){b.style.display='';b.textContent=t;}else{b.style.display='none';}}
-  window.startGame=function(){ clearBoardTimer(); level=1;score=0;rad=1;lives=4;phase='idle';boughtBuds=0;needReset=false; hud(); hideBuy(); id('status').textContent='Tap Start, watch the pattern, then tap it back.'; showBtn('Start'); if(id('gName'))id('gName').textContent=account.name; show('s-game'); };
-  window.quitToHome=function(){ clearBoardTimer(); stopCountdown(); refreshHome(); show('s-home'); };
-  window.onMainBtn=function(){ if(phase!=='idle')return; clearBoardTimer(); hideBuy(); if(needReset){ level=1;score=0;rad=1;lives=4;boughtBuds=0;needReset=false; hud(); } newRound(); };
+  window.startGame=function(){ clearBoardTimer(); clearInputTimer(); level=1;score=0;rad=1;lives=4;phase='idle';boughtBuds=0;needReset=false; hud(); hideBuy(); id('status').textContent='Tap Start, watch the pattern, then tap it back.'; showBtn('Start'); if(id('gName'))id('gName').textContent=account.name; show('s-game'); };
+  window.quitToHome=function(){ clearBoardTimer(); clearInputTimer(); stopCountdown(); refreshHome(); show('s-home'); };
+  window.onMainBtn=function(){ if(phase!=='idle')return; clearBoardTimer(); clearInputTimer(); hideBuy(); if(needReset){ level=1;score=0;rad=1;lives=4;boughtBuds=0;needReset=false; hud(); } newRound(); };
   function newRound(){ best.runs++;
     stopCountdown(); input=[];seq=[];var len=2+Math.ceil(level/2);
     for(var k=0;k<len;k++)seq.push(Math.floor(Math.random()*9));
     phase='reveal'; showBtn(null); id('status').textContent='Watch closely...';
     var t=520; seq.forEach(function(idx,n){setTimeout(function(){flash(idx,'lit',440);play(idx);},t*n+300);});
-    setTimeout(function(){phase='recall';id('status').textContent='Your turn - tap the pattern.';},t*seq.length+420);
+    setTimeout(function(){phase='recall';startInputTimer();},t*seq.length+420);
   }
   function tap(i){
     if(phase!=='recall')return;
     flash(i,'lit',200);play(i);input.push(i);var p=input.length-1;
-    if(input[p]!==seq[p]){
-      flash(i,'wilt',400);lives--;rad=1;phase='idle';hud();
-      var _cost=level*10, _canBuy=(boughtBuds<2 && score>=_cost);
-      if(lives<=0){ endRun(); needReset=true;
-        if(_canBuy){ id('status').textContent='Out of Buds! Buy a Bud or Play again.'; showBtn('Play again'); offerBuy(_cost); }
-        else { id('status').textContent='The garden dims. Light: '+score+'.'; showBtn('Play again'); hideBuy(); } scheduleBoard();
-      } else { needReset=false; id('status').textContent='A Bud wilts. '+lives+' left. Tap to retry.'; showBtn('Retry');
-        if(_canBuy) offerBuy(_cost); else hideBuy();
-      }
-      return;
-    }
+    if(input[p]!==seq[p]){ clearInputTimer(); flash(i,'wilt',400); wilt(); return; }
     if(input.length===seq.length){
-      phase='idle';
+      clearInputTimer(); phase='idle';
       seq.forEach(function(idx,n){setTimeout(function(){flash(idx,'bloom',550);},n*85);});
       var gain=Math.round(seq.length*10*rad); score+=gain; best.light+=gain; session.light+=gain; rad=Math.min(rad+0.5,3); level++; hud();
       if(level-1>best.level)best.level=level-1; if(score>best.score)best.score=score;

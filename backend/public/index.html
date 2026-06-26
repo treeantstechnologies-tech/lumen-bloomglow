@@ -8,26 +8,26 @@
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:100%;} body{background:radial-gradient(1200px 800px at 50% -10%,#1b2350 0%,#0c1024 55%,#070a18 100%);color:#F2F4FA;font-family:"Segoe UI",system-ui,Arial,sans-serif;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:8px;}
-  .phone{width:min(420px,96vw);max-height:100dvh;display:flex;flex-direction:column;justify-content:center;}
+  .phone{width:min(384px,92vw);max-height:100dvh;display:flex;flex-direction:column;justify-content:center;}
   .grad{background:linear-gradient(90deg,#FFB347,#FF7AC6,#7C9BFF);-webkit-background-clip:text;background-clip:text;color:transparent;}
   .brand{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:6px;}
-  .brand img{height:40px;filter:drop-shadow(0 4px 14px rgba(255,153,0,.35));}
-  .brand .name{font-size:30px;font-weight:800;}
-  .tagline{text-align:center;font-size:13px;font-style:italic;margin-top:4px;}
-  .card{border-radius:18px;padding:14px 16px;margin-top:10px;overflow:hidden;background:linear-gradient(180deg,rgba(30,38,82,.55),rgba(12,16,36,.6));border:1px solid rgba(255,255,255,.09);box-shadow:0 18px 50px rgba(0,0,0,.45);}
+  .brand img{height:33px;filter:drop-shadow(0 4px 14px rgba(255,153,0,.35));}
+  .brand .name{font-size:25px;font-weight:800;}
+  .tagline{text-align:center;font-size:12px;font-style:italic;margin-top:3px;}
+  .card{border-radius:16px;padding:13px 16px;margin-top:8px;overflow:hidden;background:linear-gradient(180deg,rgba(30,38,82,.55),rgba(12,16,36,.6));border:1px solid rgba(255,255,255,.09);box-shadow:0 18px 50px rgba(0,0,0,.45);}
   .screen{display:none;}
   .screen.active{display:block;animation:fade .35s ease;}
   @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-  label{display:block;font-size:13px;color:#9aa3c7;margin:8px 0 4px;}
-  input{width:100%;padding:9px 12px;border-radius:11px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#fff;font-size:15px;}
+  label{display:block;font-size:12px;color:#9aa3c7;margin:7px 0 3px;}
+  input{width:100%;padding:8px 11px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#fff;font-size:13.5px;}
   input::placeholder{color:#7e87a8;}
-  .btn{margin-top:10px;width:100%;color:#fff;border:none;border-radius:12px;padding:11px;font-size:15px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,#7C5BFF,#9B6BFF);box-shadow:0 6px 18px rgba(124,91,255,.4);margin-top:14px;transition:transform .1s,filter .15s;}
+  .btn{margin-top:10px;width:100%;color:#fff;border:none;border-radius:11px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,#7C5BFF,#9B6BFF);box-shadow:0 6px 18px rgba(124,91,255,.4);margin-top:14px;transition:transform .1s,filter .15s;}
   .btn:hover{filter:brightness(1.08);} .btn:active{transform:scale(.98);}
   .btn.alt{background:rgba(255,255,255,.07);box-shadow:none;border:1px solid rgba(255,255,255,.16);}
   .btn.sm{width:auto;padding:9px 16px;margin:0;font-size:14px;}
-  .social{display:flex;flex-direction:column;gap:10px;margin-top:6px;}
-  .sbtn{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px;border-radius:11px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#fff;cursor:pointer;font-size:15px;font-weight:600;}
-  .sbtn:hover{background:rgba(255,255,255,.1);}
+  .social{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+  .sbtn{display:flex;align-items:center;justify-content:center;gap:9px;padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:#fff;color:#1f2430;cursor:pointer;font-size:13.5px;font-weight:600;} .sbtn svg{flex:0 0 auto;} .divider{display:flex;align-items:center;text-align:center;color:#8a93b2;font-size:11.5px;margin:12px 0 4px;} .divider::before,.divider::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.14);} .divider span{padding:0 12px;} .phonerow{display:flex;gap:8px;} .phonerow input{flex:1;min-width:0;} .ccode{flex:0 0 124px;width:124px;padding:8px 7px;font-size:13px;border-radius:11px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;font-size:14px;} .ccode option{color:#111;}
+  .sbtn:hover{background:#eef0f5;}
   .dot{width:18px;height:18px;border-radius:50%;display:inline-block;}
   .muted{color:#9aa3c7;font-size:13px;}
   .center{text-align:center;}
@@ -73,20 +73,23 @@
 
   <!-- 1. REGISTRATION -->
   <div class="screen active card" id="s-reg">
-    <div class="center" style="font-size:18px;font-weight:700;margin-bottom:4px;">Create your account</div>
+    <div class="center" style="font-size:16px;font-weight:700;margin-bottom:3px;">Create your account</div>
     <div class="center muted">Email is required. Mobile is optional.</div>
-    <div class="social" style="margin-top:14px;">
-      <button class="sbtn" onclick="social('Google')"><span class="dot" style="background:#fff"></span> Continue with Google</button>
-      <button class="sbtn" onclick="social('Meta')"><span class="dot" style="background:#1877F2"></span> Continue with Meta</button>
-      <button class="sbtn" onclick="social('Apple')"><span class="dot" style="background:#fff"></span> Sign in with Apple</button>
+    <div class="social" style="margin-top:16px;">
+      <button class="sbtn" onclick="social('Google')"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg> Continue with Google</button>
+      <button class="sbtn" onclick="social('Facebook')"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078V12h3.047V9.356c0-3.007 1.792-4.668 4.533-4.668 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874V12h3.328l-.532 3.469h-2.796v8.385C19.612 22.954 24 17.99 24 12z"/></svg> Continue with Facebook</button>
+      <button class="sbtn" onclick="social('Apple')"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#000" d="M17.05 12.04c-.03-2.9 2.37-4.29 2.48-4.36-1.35-1.98-3.46-2.25-4.21-2.28-1.79-.18-3.5 1.05-4.41 1.05-.91 0-2.31-1.03-3.8-1-1.95.03-3.76 1.13-4.76 2.88-2.04 3.53-.52 8.75 1.46 11.61.97 1.4 2.12 2.97 3.63 2.91 1.45-.06 2-.94 3.75-.94 1.74 0 2.24.94 3.77.91 1.56-.03 2.54-1.41 3.49-2.82.61-.9 1.08-1.89 1.32-2.94-.03-.01-2.5-.96-2.78-3.55zM14.6 4.21c.8-.97 1.34-2.32 1.19-3.66-1.15.05-2.54.77-3.37 1.74-.74.86-1.39 2.23-1.22 3.55 1.28.1 2.59-.65 3.4-1.63z"/></svg> Sign in with Apple</button>
     </div>
-    <div class="center muted" style="margin:14px 0 2px;">or with email</div>
+    <div class="divider"><span>or with email</span></div>
     <label>Email address (required)</label>
-    <input id="email" type="email" placeholder="you@example.com" value="player@example.com"/>
+    <input id="email" type="email" placeholder="you@example.com" autocomplete="email"/>
     <label>Mobile number (optional)</label>
-    <input id="mobile" type="tel" placeholder="+91 90000 00000"/>
+    <div class="phonerow">
+      <select id="ccode" class="ccode"><option value="+91" selected>India (+91)</option><option value="+1">United States (+1)</option><option value="+44">United Kingdom (+44)</option><option value="+971">United Arab Emirates (+971)</option><option value="+65">Singapore (+65)</option><option value="+61">Australia (+61)</option><option value="+1">Canada (+1)</option><option value="+49">Germany (+49)</option><option value="+33">France (+33)</option><option value="+966">Saudi Arabia (+966)</option><option value="+974">Qatar (+974)</option><option value="+965">Kuwait (+965)</option><option value="+968">Oman (+968)</option><option value="+973">Bahrain (+973)</option><option value="+92">Pakistan (+92)</option><option value="+880">Bangladesh (+880)</option><option value="+94">Sri Lanka (+94)</option><option value="+977">Nepal (+977)</option><option value="+975">Bhutan (+975)</option><option value="+960">Maldives (+960)</option><option value="+81">Japan (+81)</option><option value="+86">China (+86)</option><option value="+82">South Korea (+82)</option><option value="+60">Malaysia (+60)</option><option value="+62">Indonesia (+62)</option><option value="+66">Thailand (+66)</option><option value="+63">Philippines (+63)</option><option value="+84">Vietnam (+84)</option><option value="+64">New Zealand (+64)</option><option value="+27">South Africa (+27)</option><option value="+234">Nigeria (+234)</option><option value="+254">Kenya (+254)</option><option value="+55">Brazil (+55)</option><option value="+52">Mexico (+52)</option><option value="+34">Spain (+34)</option><option value="+39">Italy (+39)</option><option value="+31">Netherlands (+31)</option><option value="+90">Turkey (+90)</option></select>
+      <input id="mobile" type="tel" placeholder="90000 00000" autocomplete="tel"/>
+    </div>
     <label>Birth year (for age check)</label>
-    <input id="byear" type="number" placeholder="2000" value="2000"/>
+    <input id="byear" type="number" inputmode="numeric" placeholder="YYYY"/>
     <button class="btn" onclick="sendCode()">Send verification code</button>
     <div class="steps"><i class="on"></i><i></i><i></i></div>
   </div>
@@ -202,8 +205,8 @@
   var account={email:'',mobile:'',minor:false,name:'player'};
   window.social=function(p){ account.name=p+' user'; account.email=p.toLowerCase()+'@example.com'; id('who').textContent=account.name; enterApp(); };
   window.sendCode=function(){
-    account.email=id('email').value||'player@example.com';
-    account.mobile=id('mobile').value||'';
+    account.email=(id('email').value||'').trim()||'player@example.com';
+    var _n=(id('mobile').value||'').trim(); account.mobile=_n?(id('ccode').value+' '+_n):'';
     var y=parseInt(id('byear').value||'2000',10); account.minor=(new Date().getFullYear()-y)<18;
     account.name=account.email.split('@')[0]; id('who').textContent=account.name;
     id('otpTo').textContent='Code sent to '+account.email+(account.mobile?(' and '+account.mobile):'');

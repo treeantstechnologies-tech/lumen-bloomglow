@@ -15,6 +15,8 @@ const DEFAULTS = {
   buds_low:       "Not enough light to buy a Bud.",
   share_copied:   "Link copied - share it with friends!",
   session_expired:"Your session expired. Please log in again.",
+  name_required:  "Please enter your first and last name.",
+  byear_required: "Please enter a valid birth year.",
 };
 
 function overrides() {

@@ -324,7 +324,7 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
     <div class="center muted" style="margin:2px 0 10px;">Glowbloom in a nutshell</div>
     <div class="howto">
       <div class="hrow"><span class="hicon">👀</span><span>Watch the glowbuds light up, then <b>tap them back in the same order</b>.</span></div>
-      <div class="hrow"><span class="hicon">⏱️</span><span>When it's your turn you have <b style="color:#FFB74D">10 seconds</b> to finish the pattern.</span></div>
+      <div class="hrow"><span class="hicon">⏱️</span><span>When it's your turn you have <b style="color:#FFB74D">at least 10 seconds</b> to finish the pattern.</span></div>
       <div class="hrow"><span class="hicon">🥀</span><span>A wrong tap or running out of time costs <b>1 Bud</b>. You start with <b>4 Buds</b>.</span></div>
       <div class="hrow"><span class="hicon">✨</span><span>Clearing a pattern earns <b style="color:#7BE0C0">Light</b>; perfect streaks raise your <b style="color:#FFC36B">Radiance</b> multiplier.</span></div>
       <div class="hrow"><span class="hicon">🌷</span><span>Out of Buds? <b>Buy a Bud</b> with Light (level × 10), up to <b>2 per run</b>.</span></div>
@@ -571,7 +571,7 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
   function finalizeGame(){ if(logged) return; if((score||0)<=0 && (level||1)<=1) return; logged=true; stopCountdown(); if(score>best.score)best.score=score; if(level-1>best.level)best.level=level-1; best.runs=(best.runs||0)+1; if(TOKEN){ api('/scores',{method:'POST',body:Object.assign({mode:'JOURNEY',light:score,level:level,maxRadiance:rad},deviceInfo())}); } }
   var inputTimer=null;
   function clearInputTimer(){if(inputTimer){clearInterval(inputTimer);inputTimer=null;}}
-  function startInputTimer(){clearInputTimer();var rem=10;id('status').textContent='Your turn - '+rem+'s';inputTimer=setInterval(function(){rem--;if(rem<=0){clearInputTimer();if(phase==='recall'){wilt();}return;}id('status').textContent='Your turn - '+rem+'s';},1000);}
+  function startInputTimer(){clearInputTimer();var rem=Math.max(10,seq.length*2);id('status').textContent='Your turn - '+rem+'s';inputTimer=setInterval(function(){rem--;if(rem<=0){clearInputTimer();if(phase==='recall'){wilt();}return;}id('status').textContent='Your turn - '+rem+'s';},1000);}
   function wilt(){lives--;rad=1;phase='idle';hud();var _cost=level*10,_canBuy=(boughtBuds<2&&score>=_cost);if(lives<=0){endRun();needReset=true;if(_canBuy){id('status').textContent='Out of Buds! Buy a Bud or Play again.';showBtn('Play again');offerBuy(_cost);}else{id('status').textContent='The garden dims. Light: '+score+'.';showBtn('Play again');hideBuy();}scheduleBoard();}else{needReset=false;id('status').textContent='';showBtn('Retry');if(_canBuy)offerBuy(_cost);else hideBuy();}}
   function offerBuy(cost){var b=id('buyBtn');if(b){b.style.display='';b.textContent='Buy a Bud ('+cost+' light)';}}
   function hideBuy(){var b=id('buyBtn');if(b)b.style.display='none';}
@@ -583,7 +583,7 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
   window.quitToHome=function(){ clearBoardTimer(); clearInputTimer(); stopCountdown(); finalizeGame(); refreshHome(); show('s-home'); };
   window.onMainBtn=function(){ if(phase!=='idle')return; clearBoardTimer(); clearInputTimer(); hideBuy(); if(needReset){ finalizeGame(); level=1;score=0;rad=1;lives=4;boughtBuds=0;needReset=false;logged=false; hud(); } newRound(); };
   function newRound(){ best.runs++;
-    stopCountdown(); input=[];seq=[];var len=2+Math.ceil(level/2);
+    stopCountdown(); input=[];seq=[];var len=2+Math.ceil(level/3);
     for(var k=0;k<len;k++)seq.push(Math.floor(Math.random()*9));
     phase='reveal'; showBtn(null); id('status').textContent='Watch closely...';
     var t=520; seq.forEach(function(idx,n){setTimeout(function(){flash(idx,'lit',440);play(idx);},t*n+300);});

@@ -83,15 +83,15 @@ class _WebShellState extends State<WebShell> {
       final idToken = auth.idToken;
       if (idToken == null || idToken.isEmpty) {
         await controller.runJavaScript(
-            "window.toast && window.toast('Google sign-in failed. Please try again.');");
+            "window.toast && window.toast('Google sign-in: no ID token (check serverClientId / SHA-1).');");
         return;
       }
       final payload = jsonEncode({'credential': idToken});
       await controller.runJavaScript(
           "window.onGoogleCredential && window.onGoogleCredential($payload);");
     } catch (e) {
-      await controller.runJavaScript(
-          "window.toast && window.toast('Google sign-in failed. Please try again.');");
+      final m = jsonEncode('Google sign-in error: ' + e.toString());
+      await controller.runJavaScript("window.toast && window.toast($m);");
     }
   }
 

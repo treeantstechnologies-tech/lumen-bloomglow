@@ -49,20 +49,24 @@ async function logConsent(req, opts) {
 
 async function issueCode(target, channel) {
   const code = randomCode();
-  await prisma.verificationCode.create({ data: { target, channel, codeHash: hashCode(code), expiresAt: new Date(Date.now() + (Number(process.env.OTP_TTL_MIN) || 5) * 60 * 1000) } });
+  await prisma.verificationCode.create({ data: { target, channel, codeHash: hashCode(code), expiresAt: new Date(Date.now() + (Number(process.env.OTP_TTL_MIN) || 10) * 60 * 1000) } });
   if (channel === "EMAIL") {
     try { await sendOtpEmail(target, code); } catch (e) { console.error("OTP email failed:", e.message); }
   }
   return DEV_RETURN_CODES ? code : null;
 }
 async function consumeCode(target, channel, code) {
-  const rec = await prisma.verificationCode.findFirst({ where: { target, channel, consumed: false, expiresAt: { gt: new Date() } }, orderBy: { createdAt: "desc" } });
-  if (!rec) return false;
-  if (rec.codeHash !== hashCode(code)) {
-    await prisma.verificationCode.update({ where: { id: rec.id }, data: { attempts: { increment: 1 } } });
+  const wanted = hashCode(code);
+  // Match ANY recent unconsumed, unexpired code for this target/channel — not just the
+  // newest. This makes re-sends and out-of-order email delivery still verify correctly.
+  const recs = await prisma.verificationCode.findMany({ where: { target, channel, consumed: false, expiresAt: { gt: new Date() } }, orderBy: { createdAt: "desc" }, take: 10 });
+  if (!recs.length) return false;
+  const match = recs.find((r) => r.codeHash === wanted);
+  if (!match) {
+    await prisma.verificationCode.update({ where: { id: recs[0].id }, data: { attempts: { increment: 1 } } }).catch(() => {});
     return false;
   }
-  await prisma.verificationCode.update({ where: { id: rec.id }, data: { consumed: true } });
+  await prisma.verificationCode.update({ where: { id: match.id }, data: { consumed: true } });
   return true;
 }
 function publicUser(u) {
@@ -88,26 +92,37 @@ app.post("/auth/email/verify", async (req, res) => {
   if (!email || !code) return res.status(400).json({ error: "email_and_code_required" });
   const target = String(email).toLowerCase();
   if (!(await consumeCode(target, "EMAIL", code))) return res.status(401).json({ error: "invalid_or_expired_code" });
-  const minor = ageToMinor(birthYear);
-  const existed = await prisma.user.findUnique({ where: { email: target } });
-  const user = await prisma.user.upsert({
-    where: { email: target },
-    update: { emailVerified: true },
-    create: {
-      email: target, emailVerified: true,
-      firstName: firstName || null, lastName: lastName || null,
-      displayName: displayName || [firstName, lastName].filter(Boolean).join(" ").trim() || target.split("@")[0],
-      birthYear: birthYear ? Number(birthYear) : null, isMinor: minor,
-      glade: { create: {} }, initialProvider: "EMAIL", providers: { create: { provider: "EMAIL", providerUserId: target } },
-    },
-    include: { glade: true },
-  });
-  await logAuth(req, { userId: user.id, event: existed ? "LOGIN" : "REGISTER", method: "EMAIL" });
-  if (!existed && (req.body || {}).acceptedTerms) {
-    await logConsent(req, { userId: user.id, doc: "TERMS" });
-    await logConsent(req, { userId: user.id, doc: "PRIVACY" });
+  try {
+    const minor = ageToMinor(birthYear);
+    const existed = await prisma.user.findUnique({ where: { email: target } });
+    const user = await prisma.user.upsert({
+      where: { email: target },
+      update: { emailVerified: true },
+      create: {
+        email: target, emailVerified: true,
+        firstName: firstName || null, lastName: lastName || null,
+        displayName: displayName || [firstName, lastName].filter(Boolean).join(" ").trim() || target.split("@")[0],
+        birthYear: birthYear ? Number(birthYear) : null, isMinor: minor,
+        glade: { create: {} }, initialProvider: "EMAIL",
+      },
+      include: { glade: true },
+    });
+    // Safe, conflict-proof provider link (no nested create that can throw on a unique clash).
+    await prisma.authProvider.upsert({
+      where: { provider_providerUserId: { provider: "EMAIL", providerUserId: target } },
+      update: {},
+      create: { userId: user.id, provider: "EMAIL", providerUserId: target },
+    }).catch(() => {});
+    await logAuth(req, { userId: user.id, event: existed ? "LOGIN" : "REGISTER", method: "EMAIL" });
+    if (!existed && (req.body || {}).acceptedTerms) {
+      await logConsent(req, { userId: user.id, doc: "TERMS" });
+      await logConsent(req, { userId: user.id, doc: "PRIVACY" });
+    }
+    res.json({ token: signToken(user), user: publicUser(user), kidsMode: user.isMinor, termsVersion: TERMS_VERSION });
+  } catch (e) {
+    console.error("email verify failed:", e);
+    res.status(500).json({ error: "account_setup_failed", detail: String((e && e.message) || e) });
   }
-  res.json({ token: signToken(user), user: publicUser(user), kidsMode: user.isMinor, termsVersion: TERMS_VERSION });
 });
 
 app.post("/auth/social", async (req, res) => {
@@ -145,8 +160,8 @@ app.post("/auth/google", async (req, res) => {
     info = await vr.json();
     if (!vr.ok || !info || !info.sub) return res.status(401).json({ error: "google_verify_failed" });
   } catch (e) { return res.status(401).json({ error: "google_verify_failed" }); }
-  const expected = process.env.GOOGLE_CLIENT_ID;
-  if (expected && info.aud !== expected) return res.status(401).json({ error: "google_aud_mismatch" });
+  const expected = (process.env.GOOGLE_CLIENT_ID || "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (expected.length && !expected.includes(info.aud)) return res.status(401).json({ error: "google_aud_mismatch" });
   const providerUserId = info.sub;
   const email = (info.email || "").toLowerCase();
   const name = info.name || (email ? email.split("@")[0] : "Player");
@@ -181,8 +196,8 @@ app.post("/auth/google/callback", async (req, res) => {
     const vr = await fetch("https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(credential));
     const info = await vr.json();
     if (!vr.ok || !info || !info.sub) return res.redirect("/#gerror=1");
-    const expected = process.env.GOOGLE_CLIENT_ID;
-    if (expected && info.aud !== expected) return res.redirect("/#gerror=1");
+    const expected = (process.env.GOOGLE_CLIENT_ID || "").split(",").map((s) => s.trim()).filter(Boolean);
+    if (expected.length && !expected.includes(info.aud)) return res.redirect("/#gerror=1");
     const providerUserId = info.sub;
     const email = (info.email || "").toLowerCase();
     const name = info.name || (email ? email.split("@")[0] : "Player");

@@ -533,7 +533,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   var GOOGLE_CLIENT_ID='318258264454-k63f3lnpmio66dv3eu7g0irvjljf1du7.apps.googleusercontent.com';
   window.onGoogleCredential=async function(resp){
     var r=await api('/auth/google',{method:'POST',body:Object.assign({credential:resp.credential,acceptedTerms:true},deviceInfo())});
-    if(!r.ok){ toast(M('google_fail')); return; }
+    if(!r.ok){ toast((r.data&&r.data.error)?('Google sign-in failed: '+r.data.error):M('google_fail')); return; }
     setToken(r.data.token); me=r.data.user||null;
     if(me&&me.displayName){ account.name=me.displayName; id('who').textContent=account.name; }
     loadStats(); flashSplash(1100); show('s-home');
@@ -544,7 +544,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   function gInit(){
     if(window.GB_NATIVE){ renderNativeGoogle(); return; }
     if(!(window.google&&google.accounts&&google.accounts.id)){ return setTimeout(gInit,250); }
-    google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID, callback:window.onGoogleCredential, login_uri:(location.origin+'/auth/google/callback'), auto_select:false, cancel_on_tap_outside:true});
+    google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID, callback:window.onGoogleCredential, ux_mode:'popup', auto_select:false, cancel_on_tap_outside:true});
     ['gbtn-login','gbtn-reg'].forEach(function(cid){ var el=id(cid); if(el){ el.innerHTML=''; google.accounts.id.renderButton(el,{theme:'filled_blue',size:'large',type:'standard',text:'continue_with',shape:'pill',width:300}); } });
   }
   setTimeout(hideSplash,3000);
@@ -587,7 +587,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
     if(!r.ok){id('demoRow').style.display='block';id('demoCode').textContent='(send failed)';return;}
     if(r.data.devCode){id('demoRow').style.display='block';id('demoCode').textContent=r.data.devCode;id('otp').value=r.data.devCode;}
   };
-  window.verify=async function(){ var code=(id('otp').value||'').trim(); if(!code){toast(M('enter_code'));return;} var r=await api('/auth/email/verify',{method:'POST',body:Object.assign({email:account.email,code:code,displayName:account.name,firstName:account.firstName,lastName:account.lastName,birthYear:account.byear,acceptedTerms:true},deviceInfo())}); if(!r.ok){toast(M('invalid_code'));return;} setToken(r.data.token); me=r.data.user||null; if(me&&me.displayName){account.name=me.displayName;id('who').textContent=account.name;} loadStats(); flashSplash(1100); if(otpFrom==='s-login'){show('s-home');}else{openHowTo('s-home');} };
+  window.verify=async function(){ var code=(id('otp').value||'').trim(); if(!code){toast(M('enter_code'));return;} var r=await api('/auth/email/verify',{method:'POST',body:Object.assign({email:account.email,code:code,displayName:account.name,firstName:account.firstName,lastName:account.lastName,birthYear:account.byear,acceptedTerms:true},deviceInfo())}); if(!r.ok){ var er=(r.data&&r.data.error)||''; toast((er&&er!=='invalid_or_expired_code')?('Verify error: '+er):M('invalid_code')); return; } setToken(r.data.token); me=r.data.user||null; if(me&&me.displayName){account.name=me.displayName;id('who').textContent=account.name;} loadStats(); flashSplash(1100); if(otpFrom==='s-login'){show('s-home');}else{openHowTo('s-home');} };
   window.enterApp=function(){ refreshHome(); show('s-home'); };
   var onbFrom='s-login';
   window.openHowTo=function(from){ onbFrom=from||'s-login'; var b=id('onbBtn'); if(b){ if(TOKEN){ b.textContent='Start playing'; b.onclick=function(){ enterApp(); }; } else { b.textContent='Got it'; b.onclick=function(){ show(onbFrom); }; } } show('s-onb'); };

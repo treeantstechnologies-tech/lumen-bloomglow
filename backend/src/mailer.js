@@ -6,7 +6,7 @@ const store = require("./config-store");
 let cachedToken = null, tokenExp = 0, tokenKey = "";
 
 const PUBLIC_BASE = (process.env.PUBLIC_BASE_URL || "https://glowbloom.treeantstechnologies.com").replace(/\/$/, "");
-const EXP_MIN = Number(process.env.OTP_TTL_MIN) || 5;
+const EXP_MIN = Number(process.env.OTP_TTL_MIN) || 10;
 
 function cfg() {
   const c = store.load();

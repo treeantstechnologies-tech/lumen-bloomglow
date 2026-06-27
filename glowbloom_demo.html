@@ -451,6 +451,10 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
   function M(k){ return (MSG&&MSG[k])||DEF[k]||k; }
   window.M=M;
   try{ fetch('/messages').then(function(r){return r.json();}).then(function(j){ if(j&&typeof j==='object') MSG=j; }).catch(function(){}); }catch(e){}
+  // ---- live game tuning (admin-configurable via /game-config) ----
+  var GC={lenBase:2,lenStepLevels:3,recallBaseSec:10,recallPerTileSec:2,revealMs:520,startBuds:4,maxBuyBuds:2,budCostPerLevel:10,scorePerTile:15,roundBonus:5};
+  window.GC=GC;
+  try{ fetch('/game-config').then(function(r){return r.json();}).then(function(j){ if(j&&typeof j==='object'){ for(var k in GC){ if(typeof j[k]==='number'&&isFinite(j[k])) GC[k]=j[k]; } } }).catch(function(){}); }catch(e){}
   // ---- account ----
   var account={email:'',mobile:'',minor:false,name:'player'};
   function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
@@ -562,7 +566,7 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
   var board=id('board'),els=[];
   function shade(hex,a){var n=parseInt(hex.slice(1),16);var r=Math.max(0,Math.min(255,(n>>16)+a));var g=Math.max(0,Math.min(255,((n>>8)&255)+a));var b=Math.max(0,Math.min(255,(n&255)+a));return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);}
   buds.forEach(function(b,i){var d=document.createElement('div');d.className='bud';d.style.background='radial-gradient(circle at 35% 30%,'+b.c+','+shade(b.c,-26)+')';d.style.setProperty('--g',b.c);d.textContent=b.s;d.addEventListener('click',function(){tap(i);});board.appendChild(d);els.push(d);});
-  var seq=[],input=[],level=1,score=0,rad=1,lives=4,phase='idle';
+  var seq=[],input=[],level=1,score=0,rad=1,lives=GC.startBuds,phase='idle';
   var best={level:0,score:0,light:0,runs:0}, session={light:0}, statSummary={};
   var timer=null,remaining=0,paused=false;
   var boughtBuds=0,needReset=false,gameOverTimer=null,logged=false;
@@ -571,22 +575,22 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
   function finalizeGame(){ if(logged) return; if((score||0)<=0 && (level||1)<=1) return; logged=true; stopCountdown(); if(score>best.score)best.score=score; if(level-1>best.level)best.level=level-1; best.runs=(best.runs||0)+1; if(TOKEN){ api('/scores',{method:'POST',body:Object.assign({mode:'JOURNEY',light:score,level:level,maxRadiance:rad},deviceInfo())}); } }
   var inputTimer=null;
   function clearInputTimer(){if(inputTimer){clearInterval(inputTimer);inputTimer=null;}}
-  function startInputTimer(){clearInputTimer();var rem=Math.max(10,seq.length*2);id('status').textContent='Your turn - '+rem+'s';inputTimer=setInterval(function(){rem--;if(rem<=0){clearInputTimer();if(phase==='recall'){wilt();}return;}id('status').textContent='Your turn - '+rem+'s';},1000);}
-  function wilt(){lives--;rad=1;phase='idle';hud();var _cost=level*10,_canBuy=(boughtBuds<2&&score>=_cost);if(lives<=0){endRun();needReset=true;if(_canBuy){id('status').textContent='Out of Buds! Buy a Bud or Play again.';showBtn('Play again');offerBuy(_cost);}else{id('status').textContent='The garden dims. Light: '+score+'.';showBtn('Play again');hideBuy();}scheduleBoard();}else{needReset=false;id('status').textContent='';showBtn('Retry');if(_canBuy)offerBuy(_cost);else hideBuy();}}
+  function startInputTimer(){clearInputTimer();var rem=Math.max(GC.recallBaseSec,seq.length*GC.recallPerTileSec);id('status').textContent='Your turn - '+rem+'s';inputTimer=setInterval(function(){rem--;if(rem<=0){clearInputTimer();if(phase==='recall'){wilt();}return;}id('status').textContent='Your turn - '+rem+'s';},1000);}
+  function wilt(){lives--;rad=1;phase='idle';hud();var _cost=level*GC.budCostPerLevel,_canBuy=(boughtBuds<GC.maxBuyBuds&&score>=_cost);if(lives<=0){endRun();needReset=true;if(_canBuy){id('status').textContent='Out of Buds! Buy a Bud or Play again.';showBtn('Play again');offerBuy(_cost);}else{id('status').textContent='The garden dims. Light: '+score+'.';showBtn('Play again');hideBuy();}scheduleBoard();}else{needReset=false;id('status').textContent='';showBtn('Retry');if(_canBuy)offerBuy(_cost);else hideBuy();}}
   function offerBuy(cost){var b=id('buyBtn');if(b){b.style.display='';b.textContent='Buy a Bud ('+cost+' light)';}}
   function hideBuy(){var b=id('buyBtn');if(b)b.style.display='none';}
-  window.buyBud=function(){clearBoardTimer();clearInputTimer();var cost=level*10;if(boughtBuds>=2){toast(M('buds_max'));return;}if(score<cost){toast(M('buds_low'));return;}score-=cost;lives++;boughtBuds++;needReset=false;phase='idle';hud();hideBuy();id('status').textContent='Bud restored! '+lives+' left. Tap to continue.';showBtn('Retry');};
+  window.buyBud=function(){clearBoardTimer();clearInputTimer();var cost=level*GC.budCostPerLevel;if(boughtBuds>=GC.maxBuyBuds){toast(M('buds_max'));return;}if(score<cost){toast(M('buds_low'));return;}score-=cost;lives++;boughtBuds++;needReset=false;phase='idle';hud();hideBuy();id('status').textContent='Bud restored! '+lives+' left. Tap to continue.';showBtn('Retry');};
   function hud(){id('hLevel').textContent=level;id('hScore').textContent=score;id('hRad').textContent='x'+(Math.round(rad*10)/10);id('hLives').textContent=lives;}
   function flash(i,c,ms){els[i].classList.add(c);setTimeout(function(){els[i].classList.remove(c);},ms||450);}
   function showBtn(t){var b=id('btn');if(t){b.style.display='';b.textContent=t;}else{b.style.display='none';}}
-  window.startGame=function(){ clearBoardTimer(); clearInputTimer(); finalizeGame(); level=1;score=0;rad=1;lives=4;phase='idle';boughtBuds=0;needReset=false;logged=false; hud(); hideBuy(); id('status').textContent='Tap Start, watch the pattern, then tap it back.'; showBtn('Start'); if(id('gName'))id('gName').textContent=account.name; show('s-game'); };
+  window.startGame=function(){ clearBoardTimer(); clearInputTimer(); finalizeGame(); level=1;score=0;rad=1;lives=GC.startBuds;phase='idle';boughtBuds=0;needReset=false;logged=false; hud(); hideBuy(); id('status').textContent='Tap Start, watch the pattern, then tap it back.'; showBtn('Start'); if(id('gName'))id('gName').textContent=account.name; show('s-game'); };
   window.quitToHome=function(){ clearBoardTimer(); clearInputTimer(); stopCountdown(); finalizeGame(); refreshHome(); show('s-home'); };
-  window.onMainBtn=function(){ if(phase!=='idle')return; clearBoardTimer(); clearInputTimer(); hideBuy(); if(needReset){ finalizeGame(); level=1;score=0;rad=1;lives=4;boughtBuds=0;needReset=false;logged=false; hud(); } newRound(); };
+  window.onMainBtn=function(){ if(phase!=='idle')return; clearBoardTimer(); clearInputTimer(); hideBuy(); if(needReset){ finalizeGame(); level=1;score=0;rad=1;lives=GC.startBuds;boughtBuds=0;needReset=false;logged=false; hud(); } newRound(); };
   function newRound(){ best.runs++;
-    stopCountdown(); input=[];seq=[];var len=2+Math.ceil(level/3);
+    stopCountdown(); input=[];seq=[];var len=GC.lenBase+Math.ceil(level/GC.lenStepLevels);
     for(var k=0;k<len;k++)seq.push(Math.floor(Math.random()*9));
     phase='reveal'; showBtn(null); id('status').textContent='Watch closely...';
-    var t=520; seq.forEach(function(idx,n){setTimeout(function(){flash(idx,'lit',440);play(idx);},t*n+300);});
+    var t=GC.revealMs; seq.forEach(function(idx,n){setTimeout(function(){flash(idx,'lit',440);play(idx);},t*n+300);});
     setTimeout(function(){phase='recall';startInputTimer();},t*seq.length+420);
   }
   function tap(i){
@@ -596,7 +600,7 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
     if(input.length===seq.length){
       clearInputTimer(); phase='idle';
       seq.forEach(function(idx,n){setTimeout(function(){flash(idx,'bloom',550);},n*85);});
-      var gain=Math.round(seq.length*10*rad); score+=gain; best.light+=gain; session.light+=gain; rad=Math.min(rad+0.5,3); level++; hud();
+      var gain=Math.round(seq.length*GC.scorePerTile*rad)+GC.roundBonus; score+=gain; best.light+=gain; session.light+=gain; rad=Math.min(rad+0.5,3); level++; hud();
       if(level-1>best.level)best.level=level-1; if(score>best.score)best.score=score;
       setTimeout(startCountdown,640);
     }

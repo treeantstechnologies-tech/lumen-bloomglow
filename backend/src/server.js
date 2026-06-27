@@ -21,6 +21,7 @@ app.use(express.static(path.join(__dirname, "..", "public")));
 app.use("/admin", require("./admin")); // admin module API
 
 app.get("/messages", (req, res) => res.json(require("./messages").merged()));
+app.get("/game-config", (req, res) => res.json(require("./game-config").merged()));
 app.get("/health", (req, res) => {
   res.json({ ok: true, service: "glowbloom-backend", version: "0.1.0", time: new Date().toISOString() });
 });

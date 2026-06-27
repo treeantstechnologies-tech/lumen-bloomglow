@@ -63,6 +63,7 @@
       <button data-t="test" onclick="tab('test')">Test email</button>
       <button data-t="overview" onclick="tab('overview')">Overview</button>
       <button data-t="messages" onclick="tab('messages')">Messages</button>
+      <button data-t="game" onclick="tab('game')">Game</button>
       <button class="alt" style="margin-left:auto;padding:8px 14px" onclick="logout()">Log out</button>
     </div>
 
@@ -125,6 +126,15 @@
       <div id="msgList"></div>
       <div id="msgOut" class="out"></div>
     </div>
+
+    <div id="t-game" class="card hidden">
+      <h2>Game difficulty &amp; scoring</h2>
+      <div class="muted" style="margin-bottom:12px;">Tune how hard the memory game is and how much Light players earn. Changes apply immediately (players get them on their next game). Every change is recorded in the history below. Clear a box and Save to reset a value to its default.</div>
+      <div id="gameList"></div>
+      <div id="gameOut" class="out"></div>
+      <h2 style="margin-top:18px">Recent changes</h2>
+      <table><thead><tr><th>Setting</th><th>Old</th><th>New</th><th>By</th><th>When</th></tr></thead><tbody id="gameHistTbl"></tbody></table>
+    </div>
   </div>
 </div>
 
@@ -154,10 +164,11 @@
   function enterDash(){ id('loginCard').classList.add('hidden'); id('dash').classList.remove('hidden'); loadConfig(); }
 
   function tab(t){
-    ['email','test','overview','messages'].forEach(function(x){ id('t-'+x).classList.toggle('hidden', x!==t); });
+    ['email','test','overview','messages','game'].forEach(function(x){ id('t-'+x).classList.toggle('hidden', x!==t); });
     document.querySelectorAll('.tabs button[data-t]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-t')===t); });
     if(t==='overview') loadOverview();
     if(t==='messages') loadMessages();
+    if(t==='game'){ loadGameConfig(); loadGameHistory(); }
   }
   function toggleProvider(){
     var p = id('cProvider').value;
@@ -241,6 +252,47 @@
     if(!r.ok){ showOut('msgOut', false, 'Save failed.'); return; }
     showOut('msgOut', true, 'Saved "'+key+'". Changes are live immediately.');
     loadMessages();
+  }
+
+  async function loadGameConfig(){
+    var r = await api('/game-config');
+    if(r.status===401){ logout(); return; }
+    var rows = (r.data && r.data.config) || [];
+    id('gameList').innerHTML = rows.map(function(c){
+      var mn = c.min!=null?(' min="'+c.min+'"'):'';
+      var mx = c.max!=null?(' max="'+c.max+'"'):'';
+      var st = c.step!=null?(' step="'+c.step+'"'):'';
+      return '<div style="margin-bottom:14px">'
+        + '<label style="display:block;margin:0 0 4px;color:#9aa3c7;font-size:12px">' + escapeHtml(c.label)
+          + (c.overridden ? ' <span style="color:#7BE0C0">(custom)</span>' : ' <span class="muted">(default '+c.default+')</span>') + '</label>'
+        + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+        + '<input id="gc_'+c.key+'" type="number"'+mn+mx+st+' value="'+escapeHtml(c.current)+'" style="width:120px"/>'
+        + '<button class="btn" style="margin:0;padding:9px 14px" onclick="saveGameConfig(\''+c.key+'\')">Save</button>'
+        + '<button class="btn alt" style="margin:0;padding:9px 12px" onclick="resetGameConfig(\''+c.key+'\')">Default</button>'
+        + '<span class="muted" style="flex:1;min-width:180px">'+escapeHtml(c.hint)+'</span>'
+        + '</div></div>';
+    }).join('') || '<div class="muted">No settings.</div>';
+  }
+  async function saveGameConfig(key){
+    var r = await api('/game-config', {method:'POST', body:{key:key, value:id('gc_'+key).value}});
+    if(!r.ok){ showOut('gameOut', false, 'Save failed ('+((r.data&&r.data.error)||r.status)+').'); return; }
+    var msg = 'Saved "'+key+'" = '+r.data.newValue+' (was '+r.data.oldValue+'). Live immediately.';
+    if(r.data.historyLogged===false) msg += '\nNote: change NOT recorded in DB - create the GameConfigHistory table in pgAdmin (SQL provided).';
+    showOut('gameOut', r.data.historyLogged!==false, msg);
+    loadGameConfig(); loadGameHistory();
+  }
+  async function resetGameConfig(key){
+    var r = await api('/game-config', {method:'POST', body:{key:key, value:''}});
+    if(!r.ok){ showOut('gameOut', false, 'Reset failed.'); return; }
+    showOut('gameOut', true, 'Reset "'+key+'" to default ('+r.data.newValue+').');
+    loadGameConfig(); loadGameHistory();
+  }
+  async function loadGameHistory(){
+    var r = await api('/game-config/history');
+    var rows = (r.data && r.data.history) || [];
+    id('gameHistTbl').innerHTML = rows.map(function(h){
+      return '<tr><td>'+escapeHtml(h.key)+'</td><td>'+escapeHtml(h.oldValue)+'</td><td>'+escapeHtml(h.newValue)+'</td><td>'+escapeHtml(h.changedBy||'-')+'</td><td>'+new Date(h.createdAt).toLocaleString()+'</td></tr>';
+    }).join('') || '<tr><td colspan="5" class="muted">'+(((r.data&&r.data.error))?'History table not created yet - run the SQL in pgAdmin.':'No changes yet.')+'</td></tr>';
   }
 
   if(TOKEN){ enterDash(); }

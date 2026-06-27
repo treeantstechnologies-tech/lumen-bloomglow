@@ -5,6 +5,8 @@ const store = require("./config-store");
 const mailer = require("./mailer");
 const ses = require("./ses");
 const messages = require("./messages");
+const gameConfig = require("./game-config");
+const crypto = require("crypto");
 const { getPrisma } = require("./prisma");
 
 const router = express.Router();
@@ -85,6 +87,44 @@ router.post("/messages", requireAdmin, (req, res) => {
   const ok = messages.save(key, text);
   if (!ok) return res.status(400).json({ error: "unknown_key" });
   res.json({ ok: true, messages: messages.list() });
+});
+
+// ---- Game difficulty / tuning (admin-configurable, with DB audit trail) ----
+router.get("/game-config", requireAdmin, (req, res) => {
+  res.json({ config: gameConfig.list() });
+});
+
+async function logConfigChange(key, oldValue, newValue, who) {
+  // Best-effort audit row. If the table doesn't exist yet, don't block the save.
+  const id = crypto.randomUUID();
+  await prisma.$executeRaw`
+    INSERT INTO "GameConfigHistory" ("id","key","oldValue","newValue","changedBy")
+    VALUES (${id}, ${String(key)}, ${String(oldValue)}, ${String(newValue)}, ${String(who || "admin")})`;
+}
+
+router.post("/game-config", requireAdmin, async (req, res) => {
+  const { key, value } = req.body || {};
+  if (!key) return res.status(400).json({ error: "key_required" });
+  const r = gameConfig.save(key, value);
+  if (!r.ok) return res.status(400).json({ error: r.error || "save_failed" });
+
+  let historyLogged = true, historyError = null;
+  if (String(r.oldValue) !== String(r.newValue)) {
+    try { await logConfigChange(r.key, r.oldValue, r.newValue, (req.admin && req.admin.email) || "admin"); }
+    catch (e) { historyLogged = false; historyError = "history_table_missing"; }
+  }
+  res.json({ ok: true, key: r.key, oldValue: r.oldValue, newValue: r.newValue, historyLogged, historyError, config: gameConfig.list() });
+});
+
+router.get("/game-config/history", requireAdmin, async (req, res) => {
+  try {
+    const rows = await prisma.$queryRaw`
+      SELECT "key", "oldValue", "newValue", "changedBy", "createdAt"
+      FROM "GameConfigHistory" ORDER BY "createdAt" DESC LIMIT 50`;
+    res.json({ history: rows });
+  } catch (e) {
+    res.json({ history: [], error: "history_table_missing" });
+  }
 });
 
 module.exports = router;

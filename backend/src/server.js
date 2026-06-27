@@ -242,11 +242,19 @@ app.post("/scores", requireAuth, async (req, res) => {
   res.json({ score });
 });
 
+const IST_OFFSET = 330 * 60000; // Asia/Kolkata = UTC+5:30
+// Returns the UTC instant for IST midnight, optionally N days back or month-start.
+function istMidnight(daysAgo, monthStart) {
+  const nowIST = new Date(Date.now() + IST_OFFSET);
+  const y = nowIST.getUTCFullYear(), m = nowIST.getUTCMonth();
+  const d = monthStart ? 1 : nowIST.getUTCDate();
+  const istMidnightUTC = Date.UTC(y, m, d, 0, 0, 0) - IST_OFFSET;
+  return new Date(istMidnightUTC - (daysAgo || 0) * 24 * 3600e3);
+}
 function windowSince(window) {
-  const now = Date.now();
-  if (window === "day") return new Date(now - 24 * 3600e3);
-  if (window === "week") return new Date(now - 7 * 24 * 3600e3);
-  if (window === "month") return new Date(now - 30 * 24 * 3600e3);
+  if (window === "day") return istMidnight(0);          // since 12:00 AM IST today
+  if (window === "week") return istMidnight(6);         // last 7 days (incl. today), IST-aligned
+  if (window === "month") return istMidnight(0, true);  // since the 1st of this month, IST
   return null;
 }
 async function rankedBoard(opts) {

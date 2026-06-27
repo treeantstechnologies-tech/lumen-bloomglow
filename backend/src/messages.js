@@ -17,6 +17,7 @@ const DEFAULTS = {
   session_expired:"Your session expired. Please log in again.",
   name_required:  "Please enter your first and last name.",
   byear_required: "Please enter a valid birth year.",
+  stats_copied:   "Your stats & rank were copied — share them!",
 };
 
 function overrides() {

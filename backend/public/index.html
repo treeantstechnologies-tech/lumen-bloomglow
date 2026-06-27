@@ -268,6 +268,22 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
 #fbMsg{width:100%;min-height:68px;border-radius:11px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#fff;padding:9px 11px;font-size:13.5px;font-family:inherit;resize:vertical;text-align:left;}
 .avatar-sm{width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,179,71,.55);display:none;vertical-align:middle;}
 </style>
+<style id="gb-fit">
+/* ===== Even margins on all four sides + single-screen (no page scroll) ===== */
+body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px) !important;}
+.phone{width:min(440px,100%) !important;margin:0 auto !important;}
+.screen.active{overflow:hidden;}
+#s-onb.active,#s-profile.active{overflow:auto !important;}
+/* Home: compact tiles + smaller buttons so all six tiles and six buttons fit */
+#s-home>.muted{font-size:clamp(11px,1.6vh,13px) !important;margin-bottom:clamp(3px,0.8vh,6px) !important;}
+#s-home .stats{gap:clamp(6px,1.1vh,9px) !important;margin:clamp(2px,0.6vh,5px) 0 clamp(2px,0.5vh,4px) !important;}
+#s-home .stat{padding:clamp(5px,1.05vh,11px) 8px !important;}
+#s-home .stat .v{font-size:clamp(15px,2.5vh,22px) !important;}
+#s-home .stat .l{font-size:clamp(9px,1.3vh,11.5px) !important;}
+#s-home #hsRange{font-size:clamp(9px,1.3vh,11.5px) !important;margin-top:clamp(1px,0.4vh,4px) !important;}
+#s-home .btn{margin-top:clamp(4px,0.85vh,8px) !important;padding:clamp(7px,1.05vh,10px) !important;font-size:clamp(12px,1.7vh,14px) !important;border-radius:11px !important;}
+#s-home .btn svg{width:14px !important;height:14px !important;}
+</style>
 </head>
 
 <body>
@@ -398,7 +414,7 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
 
   <!-- 6. LEADERBOARD -->
   <div class="screen card" id="s-lb">
-    <div class="topbar"><button class="icon-btn" onclick="show('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t">Leaderboards</span><span></span></div>
+    <div class="topbar"><button class="icon-btn" onclick="show('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t">Leaderboards</span><button class="icon-btn" title="Share my rank" aria-label="Share my rank" onclick="shareStats()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></button></div>
     <div class="lbtabs">
       <button class="on" data-w="day" onclick="setWindow('day')">Today</button>
       <button data-w="week" onclick="setWindow('week')">Week</button>
@@ -431,6 +447,7 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
     </div>
     <div id="pfName" class="pfname">Player</div>
     <div id="pfEmail" class="muted" style="font-size:12px;"></div>
+    <button class="btn" style="margin-top:12px" onclick="shareStats()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>Share my stats &amp; rank</button>
     <div class="fbsec">
       <div class="fbtitle">Send feedback</div>
       <label>Type</label>
@@ -485,7 +502,7 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
     b.onclick=go;
   }
   window.toast=toast;
-  var DEF={google_fail:"Google sign-in failed. Please try again.",terms_accept:"Please accept the Terms & Privacy Policy to continue.",enter_email:"Enter your email",not_registered:"You are not registered yet \u2014 please create your account first, then you can log in.",email_required:"Email is required",enter_code:"Enter the code",invalid_code:"Invalid or expired code",buds_max:"You can buy at most 2 Buds per run.",buds_low:"Not enough light to buy a Bud.",share_copied:"Link copied - share it with friends!",session_expired:"Your session expired. Please log in again.",name_required:"Please enter your first and last name.",byear_required:"Please enter a valid birth year."};
+  var DEF={google_fail:"Google sign-in failed. Please try again.",terms_accept:"Please accept the Terms & Privacy Policy to continue.",enter_email:"Enter your email",not_registered:"You are not registered yet \u2014 please create your account first, then you can log in.",email_required:"Email is required",enter_code:"Enter the code",invalid_code:"Invalid or expired code",buds_max:"You can buy at most 2 Buds per run.",buds_low:"Not enough light to buy a Bud.",share_copied:"Link copied - share it with friends!",session_expired:"Your session expired. Please log in again.",name_required:"Please enter your first and last name.",byear_required:"Please enter a valid birth year.",stats_copied:"Your stats & rank were copied — share them!"};
   var MSG={};
   function M(k){ return (MSG&&MSG[k])||DEF[k]||k; }
   window.M=M;
@@ -576,6 +593,20 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
   window.openHowTo=function(from){ onbFrom=from||'s-login'; var b=id('onbBtn'); if(b){ if(TOKEN){ b.textContent='Start playing'; b.onclick=function(){ enterApp(); }; } else { b.textContent='Got it'; b.onclick=function(){ show(onbFrom); }; } } show('s-onb'); };
   window.howtoBack=function(){ show(onbFrom); };
   window.shareApp=async function(){ var url=location.origin; var data={title:'Glowbloom',text:'Play Glowbloom - Where memory blooms into light!',url:url}; try{ if(navigator.share){ await navigator.share(data); return; } if(navigator.clipboard&&navigator.clipboard.writeText){ await navigator.clipboard.writeText(url); toast(M('share_copied')); return; } toast(url); }catch(e){} };
+  window.shareStats=async function(){
+    var url=location.origin; var rank=null;
+    if(TOKEN){ try{ var rk=await api('/scores/rank?mode=JOURNEY&window=all'); if(rk.ok&&rk.data&&rk.data.rank) rank=rk.data.rank; }catch(e){} }
+    var lines=['\U0001F338 My Glowbloom stats','Best level: '+(best.level||0),'Total light: '+(best.light||0),'Best score: '+(best.score||0)];
+    if(rank) lines.push('Rank: #'+rank+' \U0001F451');
+    var text=lines.join('\n')+'\n\nCan you out-bloom me? Play Glowbloom:';
+    try{
+      if(navigator.share){ await navigator.share({title:'Glowbloom',text:text,url:url}); return; }
+      var full=text+' '+url;
+      if(navigator.clipboard&&navigator.clipboard.writeText){ await navigator.clipboard.writeText(full); toast(M('stats_copied')); return; }
+      toast(full);
+    }catch(e){}
+  };
+
   function refreshHome(){ var d=statSummary||{}; id('hsRuns').textContent=best.runs; id('hsLight').textContent=best.light; id('hsLevel').textContent=best.level; id('hsScore').textContent=best.score; if(id('hsAvgLevel'))id('hsAvgLevel').textContent=(d.avgLevel!=null?d.avgLevel:0); if(id('hsAvgScore'))id('hsAvgScore').textContent=(d.avgScore!=null?d.avgScore:0); if(id('hsRange'))id('hsRange').textContent='Level '+(d.minLevel||0)+'-'+(best.level||0)+'  \u00b7  Score '+(d.minScore||0)+'-'+(best.score||0); }
   var DEFAULT_AVATAR='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#222a55"/><circle cx="50" cy="38" r="18" fill="#8a93b2"/><path d="M22 86c2-18 16-27 28-27s26 9 28 27z" fill="#8a93b2"/></svg>');
   var fbRating=0;

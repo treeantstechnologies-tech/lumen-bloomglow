@@ -26,6 +26,8 @@ model User {
   mobile         String?  @unique
   mobileVerified Boolean  @default(false)
 
+  firstName   String?
+  lastName    String?
   displayName String?
   avatarUrl   String?
   locale      String   @default("en")

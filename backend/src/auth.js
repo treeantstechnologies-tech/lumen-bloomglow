@@ -13,7 +13,7 @@ function randomCode() {
 }
 
 function signToken(user) {
-  return jwt.sign({ sub: user.id, email: user.email }, SECRET, { expiresIn: "24h" });
+  return jwt.sign({ sub: user.id, email: user.email }, SECRET, { expiresIn: process.env.SESSION_TTL || "24h" });
 }
 
 // Express middleware: requires a valid Bearer token, attaches req.userId.

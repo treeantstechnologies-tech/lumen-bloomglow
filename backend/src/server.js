@@ -8,6 +8,7 @@ const { hashCode, randomCode, signToken, requireAuth, ageToMinor } = require("./
 const { sendOtpEmail } = require("./mailer");
 
 const app = express();
+app.set("trust proxy", true);
 const prisma = getPrisma();
 const DEV_RETURN_CODES = String(process.env.DEV_RETURN_CODES) === "true" && process.env.NODE_ENV !== "production";
 const TERMS_VERSION = process.env.TERMS_VERSION || "1.0";
@@ -63,7 +64,7 @@ async function consumeCode(target, channel, code) {
   return true;
 }
 function publicUser(u) {
-  return { id: u.id, email: u.email, emailVerified: u.emailVerified, mobile: u.mobile, mobileVerified: u.mobileVerified, displayName: u.displayName, avatarUrl: u.avatarUrl, isMinor: u.isMinor, initialProvider: u.initialProvider, glade: u.glade ? { totalLight: u.glade.totalLight } : undefined };
+  return { id: u.id, email: u.email, emailVerified: u.emailVerified, mobile: u.mobile, mobileVerified: u.mobileVerified, displayName: u.displayName, firstName: u.firstName, lastName: u.lastName, avatarUrl: u.avatarUrl, isMinor: u.isMinor, initialProvider: u.initialProvider, glade: u.glade ? { totalLight: u.glade.totalLight } : undefined };
 }
 
 app.post("/auth/email/start", async (req, res) => {
@@ -81,7 +82,7 @@ app.get("/auth/email/exists", async (req, res) => {
 });
 
 app.post("/auth/email/verify", async (req, res) => {
-  const { email, code, displayName, birthYear } = req.body || {};
+  const { email, code, displayName, birthYear, firstName, lastName } = req.body || {};
   if (!email || !code) return res.status(400).json({ error: "email_and_code_required" });
   const target = String(email).toLowerCase();
   if (!(await consumeCode(target, "EMAIL", code))) return res.status(401).json({ error: "invalid_or_expired_code" });
@@ -91,7 +92,9 @@ app.post("/auth/email/verify", async (req, res) => {
     where: { email: target },
     update: { emailVerified: true },
     create: {
-      email: target, emailVerified: true, displayName: displayName || target.split("@")[0],
+      email: target, emailVerified: true,
+      firstName: firstName || null, lastName: lastName || null,
+      displayName: displayName || [firstName, lastName].filter(Boolean).join(" ").trim() || target.split("@")[0],
       birthYear: birthYear ? Number(birthYear) : null, isMinor: minor,
       glade: { create: {} }, initialProvider: "EMAIL", providers: { create: { provider: "EMAIL", providerUserId: target } },
     },
@@ -158,7 +161,7 @@ app.post("/auth/google", async (req, res) => {
       data: {
         email: email || ("google_" + providerUserId + "@glowbloom.local"),
         emailVerified: info.email_verified === "true" || info.email_verified === true || !!email,
-        displayName: name, avatarUrl: info.picture || null,
+        displayName: name, firstName: info.given_name || null, lastName: info.family_name || null, avatarUrl: info.picture || null,
         glade: { create: {} }, initialProvider: "GOOGLE", providers: { create: { provider: "GOOGLE", providerUserId } },
       },
       include: { glade: true },
@@ -190,7 +193,7 @@ app.post("/auth/google/callback", async (req, res) => {
     }
     if (!user) {
       isNew = true;
-      user = await prisma.user.create({ data: { email: email || ("google_" + providerUserId + "@glowbloom.local"), emailVerified: info.email_verified === "true" || info.email_verified === true || !!email, displayName: name, avatarUrl: info.picture || null, glade: { create: {} }, initialProvider: "GOOGLE", providers: { create: { provider: "GOOGLE", providerUserId } } }, include: { glade: true } });
+      user = await prisma.user.create({ data: { email: email || ("google_" + providerUserId + "@glowbloom.local"), emailVerified: info.email_verified === "true" || info.email_verified === true || !!email, displayName: name, firstName: info.given_name || null, lastName: info.family_name || null, avatarUrl: info.picture || null, glade: { create: {} }, initialProvider: "GOOGLE", providers: { create: { provider: "GOOGLE", providerUserId } } }, include: { glade: true } });
     }
     await logAuth(req, { userId: user.id, event: isNew ? "REGISTER" : "LOGIN", method: "GOOGLE" });
     if (isNew) { await logConsent(req, { userId: user.id, doc: "TERMS" }); await logConsent(req, { userId: user.id, doc: "PRIVACY" }); }

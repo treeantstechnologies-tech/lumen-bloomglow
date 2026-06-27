@@ -171,7 +171,20 @@ a{color:#FFB74D!important;}
 .crown{filter:drop-shadow(0 0 5px rgba(255,179,71,.7));}
 input:focus,select:focus{border-color:rgba(255,167,38,.6)!important;}
 #s-onb.active{overflow:auto!important;}
-#s-home.active{overflow:auto!important;}
+#s-home.active{overflow:hidden!important;justify-content:flex-start;}
+#s-home .stats{gap:8px!important;margin:6px 0 4px!important;}
+#s-home .stat{padding:clamp(7px,1.5vh,13px) 8px!important;border-radius:14px!important;background:linear-gradient(150deg,rgba(124,91,255,.18),rgba(255,167,38,.08))!important;border:1px solid rgba(255,255,255,.13)!important;box-shadow:0 6px 16px rgba(0,0,0,.3)!important;}
+#s-home .stat .v{font-size:clamp(18px,3vh,24px)!important;font-weight:800!important;font-family:'Fredoka','Poppins',sans-serif;}
+#s-home .stat .l{font-size:clamp(10px,1.45vh,12px)!important;color:#aab2d6;}
+#s-home .stat:nth-child(1) .v{color:#B7A6FF;}
+#s-home .stat:nth-child(2) .v{color:#FFC36B;}
+#s-home .stat:nth-child(3) .v{color:#7BE0C0;}
+#s-home .stat:nth-child(4) .v{color:#FF9DBB;}
+#s-home .stat:nth-child(5) .v{color:#8FD0FF;}
+#s-home .stat:nth-child(6) .v{color:#FFD180;}
+#s-home #hsRange{margin-top:3px!important;font-size:11px!important;opacity:.85;}
+#s-home>.muted{margin-bottom:6px!important;}
+#s-home .btn{margin-top:clamp(6px,1.15vh,10px)!important;padding:clamp(9px,1.45vh,12px)!important;}
 .howto{margin:4px 0 6px;}
 .hrow{display:flex;align-items:flex-start;gap:10px;text-align:left;padding:8px 2px;border-bottom:1px solid rgba(255,255,255,.07);font-size:12.8px;line-height:1.45;color:#d3d9f2;}
 .hrow:last-child{border-bottom:none;}
@@ -355,7 +368,7 @@ body{font-family:'Poppins',"Segoe UI",system-ui,Arial,sans-serif;}
 <script>
 (function(){
   function id(x){return document.getElementById(x);}
-  function show(s){document.querySelectorAll('.screen').forEach(function(e){e.classList.remove('active');});id(s).classList.add('active');document.body.classList.toggle('playing', s==='s-game');window.scrollTo(0,0);}
+  function show(s){document.querySelectorAll('.screen').forEach(function(e){e.classList.remove('active');});id(s).classList.add('active');document.body.classList.toggle('playing', s==='s-game'||s==='s-home');window.scrollTo(0,0);}
   // disable zoom (pinch, ctrl+wheel, ctrl +/-/0, gesture)
   document.addEventListener('wheel',function(e){ if(e.ctrlKey) e.preventDefault(); },{passive:false});
   document.addEventListener('keydown',function(e){ if((e.ctrlKey||e.metaKey)&&['+','-','=','0'].indexOf(e.key)>=0) e.preventDefault(); });
@@ -405,7 +418,11 @@ body{font-family:'Poppins',"Segoe UI",system-ui,Arial,sans-serif;}
     if(me&&me.displayName){ account.name=me.displayName; id('who').textContent=account.name; }
     loadStats(); show('s-home');
   };
+  window.nativeGoogle=function(){ try{ if(window.GBNative&&window.GBNative.postMessage){ GBNative.postMessage(JSON.stringify({action:'google'})); } }catch(e){} };
+  function renderNativeGoogle(){ ['gbtn-login','gbtn-reg'].forEach(function(cid){ var el=id(cid); if(el){ el.innerHTML='<button class="sbtn" style="width:100%" onclick="nativeGoogle()"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg> Continue with Google</button>'; } }); }
+  window.addEventListener('gb-native-ready', renderNativeGoogle);
   function gInit(){
+    if(window.GB_NATIVE){ renderNativeGoogle(); return; }
     if(!(window.google&&google.accounts&&google.accounts.id)){ return setTimeout(gInit,250); }
     google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID, callback:window.onGoogleCredential, login_uri:(location.origin+'/auth/google/callback'), auto_select:false, cancel_on_tap_outside:true});
     ['gbtn-login','gbtn-reg'].forEach(function(cid){ var el=id(cid); if(el){ el.innerHTML=''; google.accounts.id.renderButton(el,{theme:'filled_blue',size:'large',type:'standard',text:'continue_with',shape:'pill',width:300}); } });
@@ -487,9 +504,10 @@ body{font-family:'Poppins',"Segoe UI",system-ui,Arial,sans-serif;}
   var seq=[],input=[],level=1,score=0,rad=1,lives=4,phase='idle';
   var best={level:0,score:0,light:0,runs:0}, session={light:0}, statSummary={};
   var timer=null,remaining=0,paused=false;
-  var boughtBuds=0,needReset=false,gameOverTimer=null;
+  var boughtBuds=0,needReset=false,gameOverTimer=null,logged=false;
   function clearBoardTimer(){if(gameOverTimer){clearTimeout(gameOverTimer);gameOverTimer=null;}}
-  function scheduleBoard(){clearBoardTimer();gameOverTimer=setTimeout(function(){openLeaderboard();},5000);}
+  function scheduleBoard(){clearBoardTimer();gameOverTimer=setTimeout(function(){finalizeGame();openLeaderboard();},5000);}
+  function finalizeGame(){ if(logged) return; if((score||0)<=0 && (level||1)<=1) return; logged=true; stopCountdown(); if(score>best.score)best.score=score; if(level-1>best.level)best.level=level-1; best.runs=(best.runs||0)+1; if(TOKEN){ api('/scores',{method:'POST',body:Object.assign({mode:'JOURNEY',light:score,level:level,maxRadiance:rad},deviceInfo())}); } }
   var inputTimer=null;
   function clearInputTimer(){if(inputTimer){clearInterval(inputTimer);inputTimer=null;}}
   function startInputTimer(){clearInputTimer();var rem=10;id('status').textContent='Your turn - '+rem+'s';inputTimer=setInterval(function(){rem--;if(rem<=0){clearInputTimer();if(phase==='recall'){wilt();}return;}id('status').textContent='Your turn - '+rem+'s';},1000);}
@@ -500,9 +518,9 @@ body{font-family:'Poppins',"Segoe UI",system-ui,Arial,sans-serif;}
   function hud(){id('hLevel').textContent=level;id('hScore').textContent=score;id('hRad').textContent='x'+(Math.round(rad*10)/10);id('hLives').textContent=lives;}
   function flash(i,c,ms){els[i].classList.add(c);setTimeout(function(){els[i].classList.remove(c);},ms||450);}
   function showBtn(t){var b=id('btn');if(t){b.style.display='';b.textContent=t;}else{b.style.display='none';}}
-  window.startGame=function(){ clearBoardTimer(); clearInputTimer(); level=1;score=0;rad=1;lives=4;phase='idle';boughtBuds=0;needReset=false; hud(); hideBuy(); id('status').textContent='Tap Start, watch the pattern, then tap it back.'; showBtn('Start'); if(id('gName'))id('gName').textContent=account.name; show('s-game'); };
-  window.quitToHome=function(){ clearBoardTimer(); clearInputTimer(); stopCountdown(); refreshHome(); show('s-home'); };
-  window.onMainBtn=function(){ if(phase!=='idle')return; clearBoardTimer(); clearInputTimer(); hideBuy(); if(needReset){ level=1;score=0;rad=1;lives=4;boughtBuds=0;needReset=false; hud(); } newRound(); };
+  window.startGame=function(){ clearBoardTimer(); clearInputTimer(); finalizeGame(); level=1;score=0;rad=1;lives=4;phase='idle';boughtBuds=0;needReset=false;logged=false; hud(); hideBuy(); id('status').textContent='Tap Start, watch the pattern, then tap it back.'; showBtn('Start'); if(id('gName'))id('gName').textContent=account.name; show('s-game'); };
+  window.quitToHome=function(){ clearBoardTimer(); clearInputTimer(); stopCountdown(); finalizeGame(); refreshHome(); show('s-home'); };
+  window.onMainBtn=function(){ if(phase!=='idle')return; clearBoardTimer(); clearInputTimer(); hideBuy(); if(needReset){ finalizeGame(); level=1;score=0;rad=1;lives=4;boughtBuds=0;needReset=false;logged=false; hud(); } newRound(); };
   function newRound(){ best.runs++;
     stopCountdown(); input=[];seq=[];var len=2+Math.ceil(level/2);
     for(var k=0;k<len;k++)seq.push(Math.floor(Math.random()*9));

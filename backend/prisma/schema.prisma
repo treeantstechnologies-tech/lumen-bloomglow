@@ -140,3 +140,41 @@ model VerificationCode {
 }
 
 // ---------------------------------------------------------------------------
+
+enum GameMode {
+  JOURNEY
+  DAILY
+  BLOOMSTORM
+  ZEN
+}
+
+model Score {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mode        GameMode @default(JOURNEY)
+  light       Int
+  level       Int      @default(1)
+  maxRadiance Float    @default(1)
+  dailySeed   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([mode, dailySeed])
+}
+
+model Glade {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalLight Int      @default(0)
+  floraJson  String   @default("[]")
+  updatedAt  DateTime @updatedAt
+}
+
+model DailyPattern {
+  id        String   @id @default(cuid())
+  date      DateTime @unique @db.Date
+  seed      String
+  createdAt DateTime @default(now())
+}

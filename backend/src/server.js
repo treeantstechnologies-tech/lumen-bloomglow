@@ -69,6 +69,13 @@ async function consumeCode(target, channel, code) {
   await prisma.verificationCode.update({ where: { id: match.id }, data: { consumed: true } });
   return true;
 }
+// Returns a matching valid code record WITHOUT consuming it, so a later failure
+// (e.g. account setup) does not burn the code — the user can retry the same code.
+async function peekCode(target, channel, code) {
+  const wanted = hashCode(code);
+  const recs = await prisma.verificationCode.findMany({ where: { target, channel, consumed: false, expiresAt: { gt: new Date() } }, orderBy: { createdAt: "desc" }, take: 10 });
+  return recs.find((r) => r.codeHash === wanted) || null;
+}
 function publicUser(u) {
   return { id: u.id, email: u.email, emailVerified: u.emailVerified, mobile: u.mobile, mobileVerified: u.mobileVerified, displayName: u.displayName, firstName: u.firstName, lastName: u.lastName, avatarUrl: u.avatarUrl, isMinor: u.isMinor, initialProvider: u.initialProvider, glade: u.glade ? { totalLight: u.glade.totalLight } : undefined };
 }
@@ -91,7 +98,8 @@ app.post("/auth/email/verify", async (req, res) => {
   const { email, code, displayName, birthYear, firstName, lastName } = req.body || {};
   if (!email || !code) return res.status(400).json({ error: "email_and_code_required" });
   const target = String(email).toLowerCase();
-  if (!(await consumeCode(target, "EMAIL", code))) return res.status(401).json({ error: "invalid_or_expired_code" });
+  const _vc = await peekCode(target, "EMAIL", code);
+  if (!_vc) return res.status(401).json({ error: "invalid_or_expired_code" });
   try {
     const minor = ageToMinor(birthYear);
     const existed = await prisma.user.findUnique({ where: { email: target } });
@@ -118,6 +126,7 @@ app.post("/auth/email/verify", async (req, res) => {
       await logConsent(req, { userId: user.id, doc: "TERMS" });
       await logConsent(req, { userId: user.id, doc: "PRIVACY" });
     }
+    await prisma.verificationCode.update({ where: { id: _vc.id }, data: { consumed: true } }).catch(() => {});
     res.json({ token: signToken(user), user: publicUser(user), kidsMode: user.isMinor, termsVersion: TERMS_VERSION });
   } catch (e) {
     console.error("email verify failed:", e);

@@ -129,7 +129,10 @@
 </div>
 
 <script>
-  var TOKEN = localStorage.getItem('gb_admin_token') || null;
+  function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+  function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
+  var TOKEN = lsGet('gb_admin_token') || null;
   function id(x){return document.getElementById(x);}
   function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   async function api(path, opts){
@@ -145,9 +148,9 @@
   async function login(){
     var r = await api('/login', {method:'POST', body:{email:id('aEmail').value.trim(), password:id('aPass').value}});
     if(!r.ok){ showOut('loginOut', false, r.data.error==='admin_password_not_set' ? (r.data.hint||'Admin password not set on server.') : 'Invalid email or password.'); return; }
-    TOKEN = r.data.token; localStorage.setItem('gb_admin_token', TOKEN); enterDash();
+    TOKEN = r.data.token; lsSet('gb_admin_token', TOKEN); enterDash();
   }
-  function logout(){ TOKEN=null; localStorage.removeItem('gb_admin_token'); id('dash').classList.add('hidden'); id('loginCard').classList.remove('hidden'); }
+  function logout(){ TOKEN=null; lsDel('gb_admin_token'); id('dash').classList.add('hidden'); id('loginCard').classList.remove('hidden'); }
   function enterDash(){ id('loginCard').classList.add('hidden'); id('dash').classList.remove('hidden'); loadConfig(); }
 
   function tab(t){

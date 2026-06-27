@@ -284,6 +284,33 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
 #s-home .btn{margin-top:clamp(4px,0.85vh,8px) !important;padding:clamp(7px,1.05vh,10px) !important;font-size:clamp(12px,1.7vh,14px) !important;border-radius:11px !important;}
 #s-home .btn svg{width:14px !important;height:14px !important;}
 </style>
+<style id="gb-noscroll">
+/* ===== No internal scroll on ANY screen — compress the long ones to fit ===== */
+#s-onb.active,#s-profile.active{overflow:hidden !important;justify-content:flex-start !important;}
+
+/* How to play — fit all 8 rows + button with no scroll */
+#s-onb .topbar{margin-bottom:2px !important;padding-bottom:clamp(3px,.7vh,7px) !important;}
+#s-onb>.muted{margin:1px 0 4px !important;font-size:clamp(10px,1.4vh,12px) !important;}
+#s-onb .howto{margin:0 !important;}
+#s-onb .hrow{padding:clamp(2px,0.7vh,6px) 2px !important;font-size:clamp(10px,1.5vh,12.4px) !important;line-height:1.3 !important;gap:8px !important;}
+#s-onb .hicon{width:clamp(20px,2.8vh,26px) !important;height:clamp(20px,2.8vh,26px) !important;font-size:clamp(11px,1.7vh,14px) !important;border-radius:7px !important;}
+#s-onb .btn{margin-top:clamp(4px,0.9vh,9px) !important;padding:clamp(7px,1.05vh,10px) !important;}
+
+/* Profile + feedback — fit avatar, share, and the whole form with no scroll */
+#s-profile .avatarbox{width:clamp(70px,10.5vh,104px) !important;height:clamp(70px,10.5vh,104px) !important;margin:4px auto 2px !important;}
+#s-profile .avatar{width:100% !important;height:100% !important;}
+#s-profile .pfname{font-size:clamp(15px,2.3vh,18px) !important;margin-top:4px !important;}
+#s-profile #pfEmail{font-size:clamp(10px,1.4vh,12px) !important;}
+#s-profile .fbsec{margin-top:clamp(5px,1.2vh,14px) !important;}
+#s-profile .fbtitle{font-size:clamp(13px,1.9vh,15px) !important;}
+#s-profile label{margin:clamp(2px,0.6vh,6px) 0 2px !important;font-size:clamp(10px,1.4vh,12px) !important;}
+#s-profile #fbStars{font-size:clamp(22px,3.2vh,28px) !important;margin:1px 0 !important;}
+#s-profile #fbMsg{min-height:clamp(40px,6vh,68px) !important;}
+#s-profile .btn{margin-top:clamp(5px,1vh,12px) !important;padding:clamp(7px,1.05vh,10px) !important;}
+</style>
+<style id="gb-username">
+#who,#gName,#pfName{color:#ffffff !important;}
+</style>
 </head>
 
 <body>
@@ -535,7 +562,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
     var r=await api('/auth/google',{method:'POST',body:Object.assign({credential:resp.credential,acceptedTerms:true},deviceInfo())});
     if(!r.ok){ toast((r.data&&r.data.error)?('Google sign-in failed: '+r.data.error):M('google_fail')); return; }
     setToken(r.data.token); me=r.data.user||null;
-    if(me&&me.displayName){ account.name=me.displayName; id('who').textContent=account.name; }
+    if(me&&me.displayName){ account.name=toTitle(me.displayName); id('who').textContent=account.name; }
     loadStats(); flashSplash(1100); show('s-home');
   };
   window.nativeGoogle=function(){ try{ if(window.GBNative&&window.GBNative.postMessage){ GBNative.postMessage(JSON.stringify({action:'google'})); } }catch(e){} };
@@ -549,7 +576,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   }
   setTimeout(hideSplash,3000);
   gInit();
-  (function bootSession(){ if(!TOKEN) return; api('/me').then(function(r){ if(r.ok&&r.data&&r.data.user){ me=r.data.user; if(me.displayName){account.name=me.displayName; var w=id('who'); if(w)w.textContent=account.name;} loadStats(); show('s-home'); } }); })();
+  (function bootSession(){ if(!TOKEN) return; api('/me').then(function(r){ if(r.ok&&r.data&&r.data.user){ me=r.data.user; if(me.displayName){account.name=toTitle(me.displayName); var w=id('who'); if(w)w.textContent=account.name;} loadStats(); show('s-home'); } }); })();
   (function(){
     var h=location.hash||'';
     var mt=h.match(/gtoken=([^&]+)/);
@@ -557,7 +584,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
       setToken(decodeURIComponent(mt[1]));
       history.replaceState(null,'',location.pathname+location.search);
       api('/me').then(function(r){
-        if(r.ok&&r.data&&r.data.user){ me=r.data.user; if(me.displayName){ account.name=me.displayName; var w=id('who'); if(w)w.textContent=account.name; } }
+        if(r.ok&&r.data&&r.data.user){ me=r.data.user; if(me.displayName){ account.name=toTitle(me.displayName); var w=id('who'); if(w)w.textContent=account.name; } }
         if(typeof loadStats==='function') loadStats();
         show('s-home');
       }).catch(function(){ show('s-home'); });
@@ -587,7 +614,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
     if(!r.ok){id('demoRow').style.display='block';id('demoCode').textContent='(send failed)';return;}
     if(r.data.devCode){id('demoRow').style.display='block';id('demoCode').textContent=r.data.devCode;id('otp').value=r.data.devCode;}
   };
-  window.verify=async function(){ var code=(id('otp').value||'').trim(); if(!code){toast(M('enter_code'));return;} var r=await api('/auth/email/verify',{method:'POST',body:Object.assign({email:account.email,code:code,displayName:account.name,firstName:account.firstName,lastName:account.lastName,birthYear:account.byear,acceptedTerms:true},deviceInfo())}); if(!r.ok){ var er=(r.data&&r.data.error)||''; var det=(r.data&&r.data.detail)?(' — '+String(r.data.detail).slice(0,180)):''; toast((er&&er!=='invalid_or_expired_code')?('Verify error: '+er+det):M('invalid_code')); return; } setToken(r.data.token); me=r.data.user||null; if(me&&me.displayName){account.name=me.displayName;id('who').textContent=account.name;} loadStats(); flashSplash(1100); if(otpFrom==='s-login'){show('s-home');}else{openHowTo('s-home');} };
+  window.verify=async function(){ var code=(id('otp').value||'').trim(); if(!code){toast(M('enter_code'));return;} var r=await api('/auth/email/verify',{method:'POST',body:Object.assign({email:account.email,code:code,displayName:account.name,firstName:account.firstName,lastName:account.lastName,birthYear:account.byear,acceptedTerms:true},deviceInfo())}); if(!r.ok){ var er=(r.data&&r.data.error)||''; var det=(r.data&&r.data.detail)?(' — '+String(r.data.detail).slice(0,180)):''; toast((er&&er!=='invalid_or_expired_code')?('Verify error: '+er+det):M('invalid_code')); return; } setToken(r.data.token); me=r.data.user||null; if(me&&me.displayName){account.name=toTitle(me.displayName);id('who').textContent=account.name;} loadStats(); flashSplash(1100); if(otpFrom==='s-login'){show('s-home');}else{openHowTo('s-home');} };
   window.enterApp=function(){ refreshHome(); show('s-home'); };
   var onbFrom='s-login';
   window.openHowTo=function(from){ onbFrom=from||'s-login'; var b=id('onbBtn'); if(b){ if(TOKEN){ b.textContent='Start playing'; b.onclick=function(){ enterApp(); }; } else { b.textContent='Got it'; b.onclick=function(){ show(onbFrom); }; } } show('s-onb'); };
@@ -611,7 +638,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   var DEFAULT_AVATAR='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#222a55"/><circle cx="50" cy="38" r="18" fill="#8a93b2"/><path d="M22 86c2-18 16-27 28-27s26 9 28 27z" fill="#8a93b2"/></svg>');
   var fbRating=0;
   function applyAvatar(){ var u=(me&&me.avatarUrl)||''; var h=id('homeAvatar'); if(h){ if(u){h.src=u;h.style.display='inline-block';}else{h.style.display='none';} } var p=id('pfAvatar'); if(p){ p.src=u||DEFAULT_AVATAR; } }
-  window.openProfile=function(){ id('pfName').textContent=(account&&account.name)||'Player'; var em=(me&&me.email)||(account&&account.email)||''; id('pfEmail').textContent=(em&&em.indexOf('@glowbloom.local')<0)?em:''; setStars(0); var m=id('fbMsg'); if(m)m.value=''; var cat=id('fbCat'); if(cat)cat.value='other'; applyAvatar(); show('s-profile'); };
+  window.openProfile=function(){ id('pfName').textContent=toTitle((account&&account.name)||'Player'); var em=(me&&me.email)||(account&&account.email)||''; id('pfEmail').textContent=(em&&em.indexOf('@glowbloom.local')<0)?em:''; setStars(0); var m=id('fbMsg'); if(m)m.value=''; var cat=id('fbCat'); if(cat)cat.value='other'; applyAvatar(); show('s-profile'); };
   window.setStars=function(n){ fbRating=n; var sp=document.querySelectorAll('#fbStars span'); for(var i=0;i<sp.length;i++){ sp[i].classList.toggle('on',(i+1)<=n); } };
   window.onAvatarPick=function(ev){ var file=ev&&ev.target&&ev.target.files&&ev.target.files[0]; if(!file)return; if(!/^image\//.test(file.type)){ toast('Please choose an image file.'); return; } var reader=new FileReader(); reader.onload=function(e){ var img=new Image(); img.onload=function(){ try{ var S=256, c=document.createElement('canvas'); c.width=S; c.height=S; var ctx=c.getContext('2d'); var mn=Math.min(img.width,img.height), sx=(img.width-mn)/2, sy=(img.height-mn)/2; ctx.drawImage(img,sx,sy,mn,mn,0,0,S,S); uploadAvatar(c.toDataURL('image/jpeg',0.82)); }catch(err){ toast('Could not process that image.'); } }; img.onerror=function(){ toast('Could not read that image.'); }; img.src=e.target.result; }; reader.readAsDataURL(file); };
   async function uploadAvatar(dataUrl){ var p=id('pfAvatar'); if(p)p.src=dataUrl; if(me)me.avatarUrl=dataUrl; applyAvatar(); if(!TOKEN){ toast('Photo set for this session.'); return; } var r=await api('/me/avatar',{method:'POST',body:{dataUrl:dataUrl}}); if(r.ok){ toast('Profile photo updated!'); if(r.data&&r.data.user){ me=r.data.user; applyAvatar(); } } else { toast('Could not save photo to your account.'); } }
@@ -661,7 +688,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   function hud(){id('hLevel').textContent=level;id('hScore').textContent=score;id('hRad').textContent='x'+(Math.round(rad*10)/10);id('hLives').textContent=lives;}
   function flash(i,c,ms){els[i].classList.add(c);setTimeout(function(){els[i].classList.remove(c);},ms||450);}
   function showBtn(t){var b=id('btn');if(t){b.style.display='';b.textContent=t;}else{b.style.display='none';}}
-  window.startGame=function(){ clearBoardTimer(); clearInputTimer(); finalizeGame(); level=1;score=0;rad=1;lives=GC.startBuds;phase='idle';boughtBuds=0;needReset=false;logged=false; hud(); hideBuy(); id('status').textContent='Tap Start, watch the pattern, then tap it back.'; showBtn('Start'); if(id('gName'))id('gName').textContent=account.name; show('s-game'); };
+  window.startGame=function(){ clearBoardTimer(); clearInputTimer(); finalizeGame(); level=1;score=0;rad=1;lives=GC.startBuds;phase='idle';boughtBuds=0;needReset=false;logged=false; hud(); hideBuy(); id('status').textContent='Tap Start, watch the pattern, then tap it back.'; showBtn('Start'); if(id('gName'))id('gName').textContent=toTitle(account.name); show('s-game'); };
   window.quitToHome=function(){ clearBoardTimer(); clearInputTimer(); stopCountdown(); finalizeGame(); refreshHome(); show('s-home'); };
   window.onMainBtn=function(){ if(phase!=='idle')return; clearBoardTimer(); clearInputTimer(); hideBuy(); if(needReset){ finalizeGame(); level=1;score=0;rad=1;lives=GC.startBuds;boughtBuds=0;needReset=false;logged=false; hud(); } newRound(); };
   function newRound(){ best.runs++;

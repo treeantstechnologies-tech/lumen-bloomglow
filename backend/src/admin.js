@@ -127,4 +127,16 @@ router.get("/game-config/history", requireAdmin, async (req, res) => {
   }
 });
 
+// ---- User feedback (read-only view from the Feedback table) ----
+router.get("/feedback", requireAdmin, async (req, res) => {
+  try {
+    const rows = await prisma.$queryRaw`
+      SELECT "name", "email", "category", "rating", "message", "platform", "createdAt"
+      FROM "Feedback" ORDER BY "createdAt" DESC LIMIT 100`;
+    res.json({ feedback: rows });
+  } catch (e) {
+    res.json({ feedback: [], error: "feedback_table_missing" });
+  }
+});
+
 module.exports = router;

@@ -140,7 +140,7 @@ input::placeholder{text-align:center;}
 #board{
   flex:0 0 auto;
   aspect-ratio:1/1;
-  width:min(94vw, calc(100dvh - 330px));
+  width:min(94vw, calc(100svh - 360px));
   max-width:100%;
   margin:clamp(4px,1vh,10px) auto;
   gap:clamp(6px,1.4vh,10px);
@@ -253,6 +253,21 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
 #gName{font-weight:700 !important;color:#FFC36B !important;}
 #status{font-weight:700 !important;color:#dfe5fb !important;}
 </style>
+<style id="gb-profile">
+#s-profile.active{overflow:auto !important;justify-content:flex-start;}
+.avatarbox{position:relative;width:104px;height:104px;margin:6px auto 2px;}
+.avatar{width:104px;height:104px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,179,71,.6);background:rgba(255,255,255,.06);box-shadow:0 6px 18px rgba(0,0,0,.4);}
+.avataredit{position:absolute;right:-2px;bottom:-2px;width:34px;height:34px;border-radius:50%;border:2px solid #141a3e;background:linear-gradient(135deg,#FFA726,#FB8C00);color:#fff;cursor:pointer;font-size:15px;line-height:1;box-shadow:0 4px 12px rgba(251,140,0,.5);}
+.pfname{font-weight:800;font-size:18px;margin-top:8px;font-family:'Fredoka','Poppins',sans-serif;color:#FFD180;text-align:center;}
+.fbsec{margin-top:14px;text-align:left;}
+.fbtitle{font-weight:700;font-size:15px;margin-bottom:2px;font-family:'Fredoka','Poppins',sans-serif;}
+.stars{font-size:28px;color:#3a4675;letter-spacing:6px;cursor:pointer;user-select:none;text-align:center;margin:2px 0;}
+.stars span{transition:color .12s,transform .12s;display:inline-block;}
+.stars span:hover{transform:scale(1.12);}
+.stars span.on{color:#FFC107;text-shadow:0 0 10px rgba(255,193,7,.5);}
+#fbMsg{width:100%;min-height:68px;border-radius:11px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#fff;padding:9px 11px;font-size:13.5px;font-family:inherit;resize:vertical;text-align:left;}
+.avatar-sm{width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,179,71,.55);display:none;vertical-align:middle;}
+</style>
 </head>
 
 <body>
@@ -326,7 +341,8 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
       <div class="hrow"><span class="hicon">👀</span><span>Watch the glowbuds light up, then <b>tap them back in the same order</b>.</span></div>
       <div class="hrow"><span class="hicon">⏱️</span><span>When it's your turn you have <b style="color:#FFB74D">at least 10 seconds</b> to finish the pattern.</span></div>
       <div class="hrow"><span class="hicon">🥀</span><span>A wrong tap or running out of time costs <b>1 Bud</b>. You start with <b>4 Buds</b>.</span></div>
-      <div class="hrow"><span class="hicon">✨</span><span>Clearing a pattern earns <b style="color:#7BE0C0">Light</b>; perfect streaks raise your <b style="color:#FFC36B">Radiance</b> multiplier.</span></div>
+      <div class="hrow"><span class="hicon">✨</span><span>Clearing a pattern earns <b style="color:#7BE0C0">Light</b> (your points). Longer patterns are worth more Light.</span></div>
+      <div class="hrow"><span class="hicon">🔆</span><span><b style="color:#FFC36B">Radiance</b> is your streak multiplier. Each pattern you clear <b>without a mistake</b> raises it (up to <b>x3</b>) and multiplies the Light you earn. A wrong tap or a lost Bud resets it to <b>x1</b>.</span></div>
       <div class="hrow"><span class="hicon">🌷</span><span>Out of Buds? <b>Buy a Bud</b> with Light (level × 10), up to <b>2 per run</b>.</span></div>
       <div class="hrow"><span class="hicon">🎵</span><span>Pick <b>Sargam</b> (Sa Re Ga…), Beeps, or Mute for tap sounds.</span></div>
       <div class="hrow"><span class="hicon">🏆</span><span>Climb the <b>Leaderboard</b> — players tied on level &amp; Light share a rank.</span></div>
@@ -337,7 +353,7 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
   <!-- 4. HOME -->
   <div class="screen card" id="s-home">
     <div class="topbar"><img class="brandlogo" src="glowbloom_logo.png" alt="glowbloom"/><span class="t"></span><button class="icon-btn" aria-label="Settings" title="Settings" onclick="show('s-settings')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></div>
-    <div class="muted" style="margin-bottom:10px;">Welcome, <span id="who">player</span></div>
+    <div class="muted" style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;"><img id="homeAvatar" class="avatar-sm" alt=""/>Welcome, <span id="who">player</span></div>
     <div class="stats">
       <div class="stat"><div class="v" id="hsRuns">0</div><div class="l">Games played</div></div>
       <div class="stat"><div class="v" id="hsLight">0</div><div class="l">Total light</div></div>
@@ -349,6 +365,7 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
     <div class="muted" id="hsRange" style="margin-top:6px;font-size:11.5px;">Level 0-0 &middot; Score 0-0</div>
     <button class="btn" onclick="startGame()"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:8px"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>Play · Journey</button>
     <button class="btn alt" onclick="openLeaderboard()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>Leaderboards &amp; ranking</button>
+    <button class="btn alt" onclick="openProfile()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Profile &amp; feedback</button>
     <button class="btn alt" onclick="openHowTo('s-home')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>How to play</button>
     <button class="btn alt" onclick="shareApp()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>Share app</button>
     <button class="btn alt" onclick="logout()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>Log out</button>
@@ -404,6 +421,28 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
     <button class="btn alt" onclick="logout()" style="margin-top:18px;">Log out</button>
   </div>
 
+  <!-- 7b. PROFILE -->
+  <div class="screen card" id="s-profile">
+    <div class="topbar"><button class="icon-btn" onclick="show('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t">Profile</span><span style="width:34px;display:inline-block"></span></div>
+    <div class="avatarbox">
+      <img id="pfAvatar" class="avatar" alt="Your photo"/>
+      <button class="avataredit" type="button" title="Change photo" onclick="id('pfFile').click()">&#128247;</button>
+      <input id="pfFile" type="file" accept="image/*" style="display:none" onchange="onAvatarPick(event)"/>
+    </div>
+    <div id="pfName" class="pfname">Player</div>
+    <div id="pfEmail" class="muted" style="font-size:12px;"></div>
+    <div class="fbsec">
+      <div class="fbtitle">Send feedback</div>
+      <label>Type</label>
+      <select id="fbCat" class="ccode" style="width:100%"><option value="idea">&#128161; Idea / suggestion</option><option value="bug">&#128030; Bug / problem</option><option value="other" selected>&#128172; Other</option></select>
+      <label>Rating</label>
+      <div id="fbStars" class="stars"><span data-s="1" onclick="setStars(1)">&#9733;</span><span data-s="2" onclick="setStars(2)">&#9733;</span><span data-s="3" onclick="setStars(3)">&#9733;</span><span data-s="4" onclick="setStars(4)">&#9733;</span><span data-s="5" onclick="setStars(5)">&#9733;</span></div>
+      <label>Message</label>
+      <textarea id="fbMsg" placeholder="Tell us what you love or what we can improve..."></textarea>
+      <button class="btn" onclick="submitFeedback()">Submit feedback</button>
+    </div>
+  </div>
+
   <!-- 8. EXIT -->
   <div class="screen card" id="s-exit">
     <div class="center" style="font-size:20px;font-weight:700;">See you tomorrow</div>
@@ -428,7 +467,7 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
   function hideSplash(){ var sp=id('splash'); if(sp){ sp.classList.add('hide'); setTimeout(function(){ if(sp){ sp.style.display='none'; } },560); } }
   function flashSplash(ms){ var sp=id('splash'); if(!sp)return; sp.style.display='flex'; void sp.offsetWidth; sp.classList.remove('hide'); setTimeout(hideSplash, ms||1000); }
   window.flashSplash=flashSplash;
-  function show(s){document.querySelectorAll('.screen').forEach(function(e){e.classList.remove('active');});id(s).classList.add('active');document.body.classList.toggle('playing', s==='s-game'||s==='s-home');window.scrollTo(0,0);}
+  function show(s){document.querySelectorAll('.screen').forEach(function(e){e.classList.remove('active');});id(s).classList.add('active');document.body.classList.toggle('playing', s==='s-game'||s==='s-home');window.scrollTo(0,0);try{if(typeof applyAvatar==='function')applyAvatar();}catch(e){}}
   // disable zoom (pinch, ctrl+wheel, ctrl +/-/0, gesture)
   document.addEventListener('wheel',function(e){ if(e.ctrlKey) e.preventDefault(); },{passive:false});
   document.addEventListener('keydown',function(e){ if((e.ctrlKey||e.metaKey)&&['+','-','=','0'].indexOf(e.key)>=0) e.preventDefault(); });
@@ -538,6 +577,14 @@ input:focus,select:focus{box-shadow:0 0 0 3px rgba(251,140,0,.18) !important;}
   window.howtoBack=function(){ show(onbFrom); };
   window.shareApp=async function(){ var url=location.origin; var data={title:'Glowbloom',text:'Play Glowbloom - Where memory blooms into light!',url:url}; try{ if(navigator.share){ await navigator.share(data); return; } if(navigator.clipboard&&navigator.clipboard.writeText){ await navigator.clipboard.writeText(url); toast(M('share_copied')); return; } toast(url); }catch(e){} };
   function refreshHome(){ var d=statSummary||{}; id('hsRuns').textContent=best.runs; id('hsLight').textContent=best.light; id('hsLevel').textContent=best.level; id('hsScore').textContent=best.score; if(id('hsAvgLevel'))id('hsAvgLevel').textContent=(d.avgLevel!=null?d.avgLevel:0); if(id('hsAvgScore'))id('hsAvgScore').textContent=(d.avgScore!=null?d.avgScore:0); if(id('hsRange'))id('hsRange').textContent='Level '+(d.minLevel||0)+'-'+(best.level||0)+'  \u00b7  Score '+(d.minScore||0)+'-'+(best.score||0); }
+  var DEFAULT_AVATAR='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#222a55"/><circle cx="50" cy="38" r="18" fill="#8a93b2"/><path d="M22 86c2-18 16-27 28-27s26 9 28 27z" fill="#8a93b2"/></svg>');
+  var fbRating=0;
+  function applyAvatar(){ var u=(me&&me.avatarUrl)||''; var h=id('homeAvatar'); if(h){ if(u){h.src=u;h.style.display='inline-block';}else{h.style.display='none';} } var p=id('pfAvatar'); if(p){ p.src=u||DEFAULT_AVATAR; } }
+  window.openProfile=function(){ id('pfName').textContent=(account&&account.name)||'Player'; var em=(me&&me.email)||(account&&account.email)||''; id('pfEmail').textContent=(em&&em.indexOf('@glowbloom.local')<0)?em:''; setStars(0); var m=id('fbMsg'); if(m)m.value=''; var cat=id('fbCat'); if(cat)cat.value='other'; applyAvatar(); show('s-profile'); };
+  window.setStars=function(n){ fbRating=n; var sp=document.querySelectorAll('#fbStars span'); for(var i=0;i<sp.length;i++){ sp[i].classList.toggle('on',(i+1)<=n); } };
+  window.onAvatarPick=function(ev){ var file=ev&&ev.target&&ev.target.files&&ev.target.files[0]; if(!file)return; if(!/^image\//.test(file.type)){ toast('Please choose an image file.'); return; } var reader=new FileReader(); reader.onload=function(e){ var img=new Image(); img.onload=function(){ try{ var S=256, c=document.createElement('canvas'); c.width=S; c.height=S; var ctx=c.getContext('2d'); var mn=Math.min(img.width,img.height), sx=(img.width-mn)/2, sy=(img.height-mn)/2; ctx.drawImage(img,sx,sy,mn,mn,0,0,S,S); uploadAvatar(c.toDataURL('image/jpeg',0.82)); }catch(err){ toast('Could not process that image.'); } }; img.onerror=function(){ toast('Could not read that image.'); }; img.src=e.target.result; }; reader.readAsDataURL(file); };
+  async function uploadAvatar(dataUrl){ var p=id('pfAvatar'); if(p)p.src=dataUrl; if(me)me.avatarUrl=dataUrl; applyAvatar(); if(!TOKEN){ toast('Photo set for this session.'); return; } var r=await api('/me/avatar',{method:'POST',body:{dataUrl:dataUrl}}); if(r.ok){ toast('Profile photo updated!'); if(r.data&&r.data.user){ me=r.data.user; applyAvatar(); } } else { toast('Could not save photo to your account.'); } }
+  window.submitFeedback=async function(){ var msg=(id('fbMsg').value||'').trim(); var cat=(id('fbCat').value)||'other'; if(!msg&&!fbRating){ toast('Add a rating or a message first.'); return; } var r=await api('/feedback',{method:'POST',body:Object.assign({category:cat,rating:fbRating,message:msg},deviceInfo())}); if(r.ok){ toast('Thanks for your feedback!'); id('fbMsg').value=''; setStars(0); } else { toast('Could not send feedback. Please try again.'); } };
   window.exitApp=function(){ id('exLight').textContent=session.light; id('exLevel').textContent=best.level; stopCountdown(); show('s-exit'); };
   window.reopen=function(){ session.light=0; refreshHome(); show('s-home'); };
   window.logout=async function(){ stopCountdown(); try{await api('/auth/logout',{method:'POST',body:deviceInfo()});}catch(e){} setToken(null); me=null; account={email:'',mobile:'',minor:false,name:'player'}; best.level=0;best.score=0;best.light=0;best.runs=0; if(id('agree'))id('agree').checked=false; show('s-login'); };

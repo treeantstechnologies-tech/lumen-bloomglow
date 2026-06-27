@@ -64,6 +64,7 @@
       <button data-t="overview" onclick="tab('overview')">Overview</button>
       <button data-t="messages" onclick="tab('messages')">Messages</button>
       <button data-t="game" onclick="tab('game')">Game</button>
+      <button data-t="feedback" onclick="tab('feedback')">Feedback</button>
       <button class="alt" style="margin-left:auto;padding:8px 14px" onclick="logout()">Log out</button>
     </div>
 
@@ -135,6 +136,13 @@
       <h2 style="margin-top:18px">Recent changes</h2>
       <table><thead><tr><th>Setting</th><th>Old</th><th>New</th><th>By</th><th>When</th></tr></thead><tbody id="gameHistTbl"></tbody></table>
     </div>
+
+    <div id="t-feedback" class="card hidden">
+      <h2>User feedback</h2>
+      <div class="muted" style="margin-bottom:12px;">Feedback submitted by players from the Profile screen. Stored in the Feedback table.</div>
+      <table><thead><tr><th>When</th><th>User</th><th>Type</th><th>Rating</th><th>Message</th><th>Platform</th></tr></thead><tbody id="fbTbl"></tbody></table>
+      <div id="fbOut" class="out"></div>
+    </div>
   </div>
 </div>
 
@@ -164,11 +172,12 @@
   function enterDash(){ id('loginCard').classList.add('hidden'); id('dash').classList.remove('hidden'); loadConfig(); }
 
   function tab(t){
-    ['email','test','overview','messages','game'].forEach(function(x){ id('t-'+x).classList.toggle('hidden', x!==t); });
+    ['email','test','overview','messages','game','feedback'].forEach(function(x){ id('t-'+x).classList.toggle('hidden', x!==t); });
     document.querySelectorAll('.tabs button[data-t]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-t')===t); });
     if(t==='overview') loadOverview();
     if(t==='messages') loadMessages();
     if(t==='game'){ loadGameConfig(); loadGameHistory(); }
+    if(t==='feedback') loadFeedback();
   }
   function toggleProvider(){
     var p = id('cProvider').value;
@@ -293,6 +302,16 @@
     id('gameHistTbl').innerHTML = rows.map(function(h){
       return '<tr><td>'+escapeHtml(h.key)+'</td><td>'+escapeHtml(h.oldValue)+'</td><td>'+escapeHtml(h.newValue)+'</td><td>'+escapeHtml(h.changedBy||'-')+'</td><td>'+new Date(h.createdAt).toLocaleString()+'</td></tr>';
     }).join('') || '<tr><td colspan="5" class="muted">'+(((r.data&&r.data.error))?'History table not created yet - run the SQL in pgAdmin.':'No changes yet.')+'</td></tr>';
+  }
+
+  async function loadFeedback(){
+    var r = await api('/feedback');
+    if(r.status===401){ logout(); return; }
+    var rows=(r.data&&r.data.feedback)||[];
+    id('fbTbl').innerHTML = rows.map(function(x){
+      var rt=Number(x.rating)||0; var stars= rt? ('\u2605'.repeat(rt)+'\u2606'.repeat(5-rt)) : '-';
+      return '<tr><td>'+new Date(x.createdAt).toLocaleString()+'</td><td>'+escapeHtml(x.name||x.email||'-')+'</td><td>'+escapeHtml(x.category||'-')+'</td><td style="color:#FFC107">'+stars+'</td><td>'+escapeHtml(x.message||'')+'</td><td>'+escapeHtml(x.platform||'-')+'</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="muted">'+(((r.data&&r.data.error))?'Feedback table not created yet - run the SQL in pgAdmin.':'No feedback yet.')+'</td></tr>';
   }
 
   if(TOKEN){ enterDash(); }

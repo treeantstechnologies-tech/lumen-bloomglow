@@ -6,6 +6,7 @@ const path = require("path");
 const { getPrisma } = require("./prisma");
 const { hashCode, randomCode, signToken, requireAuth, ageToMinor } = require("./auth");
 const { sendOtpEmail } = require("./mailer");
+const crypto = require("crypto");
 
 const app = express();
 app.set("trust proxy", true);
@@ -234,6 +235,37 @@ app.post("/consent", requireAuth, async (req, res) => {
   const list = (Array.isArray(docs) && docs.length ? docs : ["TERMS", "PRIVACY"]).filter((d) => allowed.includes(d));
   for (const doc of list) await logConsent(req, { userId: req.userId, doc, version });
   res.json({ ok: true, recorded: list, version: version || TERMS_VERSION });
+});
+
+// Profile photo: store a small base64 data-URL on the user record.
+app.post("/me/avatar", requireAuth, async (req, res) => {
+  const { dataUrl } = req.body || {};
+  if (!dataUrl || typeof dataUrl !== "string" || !/^data:image\/(png|jpeg|jpg|webp);base64,/.test(dataUrl))
+    return res.status(400).json({ error: "invalid_image" });
+  if (dataUrl.length > 600000) return res.status(413).json({ error: "image_too_large" });
+  try {
+    const user = await prisma.user.update({ where: { id: req.userId }, data: { avatarUrl: dataUrl }, include: { glade: true } });
+    res.json({ ok: true, user: publicUser(user) });
+  } catch (e) { res.status(500).json({ error: "avatar_save_failed" }); }
+});
+
+// User feedback -> "Feedback" table (created via pgAdmin). Best-effort device/ip capture.
+app.post("/feedback", requireAuth, async (req, res) => {
+  const { category, rating, message } = req.body || {};
+  const cat = ["bug", "idea", "other"].includes(String(category)) ? String(category) : "other";
+  const rate = Math.max(0, Math.min(5, parseInt(rating, 10) || 0));
+  const msg = String(message || "").slice(0, 2000);
+  if (!msg && !rate) return res.status(400).json({ error: "empty_feedback" });
+  const meta = reqMeta(req), dev = deviceMeta(req.body);
+  let u = null;
+  try { u = await prisma.user.findUnique({ where: { id: req.userId }, select: { email: true, displayName: true } }); } catch (e) {}
+  const id = crypto.randomUUID();
+  try {
+    await prisma.$executeRaw`
+      INSERT INTO "Feedback" ("id","userId","email","name","category","rating","message","platform","device","ip")
+      VALUES (${id}, ${req.userId}, ${u ? u.email : null}, ${u ? u.displayName : null}, ${cat}, ${rate}, ${msg}, ${dev.platform}, ${dev.device}, ${meta.ip})`;
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ ok: false, error: "feedback_save_failed" }); }
 });
 
 app.post("/scores", requireAuth, async (req, res) => {

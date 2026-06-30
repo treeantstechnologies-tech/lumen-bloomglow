@@ -435,6 +435,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
       <button class="btn sm" id="btn" onclick="onMainBtn()">Start</button>
       <button class="btn sm alt" id="pauseBtn" style="display:none" onclick="togglePause()">Pause</button>
       <button class="btn sm" id="buyBtn" style="display:none;background:linear-gradient(135deg,#FFB347,#FF7AC6)" onclick="buyBud()">Buy a bud</button>
+      <button class="btn sm" id="adBtn" style="display:none;background:linear-gradient(135deg,#43C06A,#2E9E4F)" onclick="nativeRewarded()">🎬 Free Bud (watch ad)</button>
       <div id="status">Watch the pattern, then tap it back.</div>
     </div>
   </div>
@@ -674,23 +675,27 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   var seq=[],input=[],level=1,score=0,rad=1,lives=GC.startBuds,phase='idle';
   var best={level:0,score:0,light:0,runs:0}, session={light:0}, statSummary={};
   var timer=null,remaining=0,paused=false;
-  var boughtBuds=0,needReset=false,gameOverTimer=null,logged=false;
+  var boughtBuds=0,adBuds=0,needReset=false,gameOverTimer=null,logged=false;
   function clearBoardTimer(){if(gameOverTimer){clearTimeout(gameOverTimer);gameOverTimer=null;}}
   function scheduleBoard(){clearBoardTimer();gameOverTimer=setTimeout(function(){finalizeGame();openLeaderboard();},5000);}
   function finalizeGame(){ if(logged) return; if((score||0)<=0 && (level||1)<=1) return; logged=true; stopCountdown(); if(score>best.score)best.score=score; if(level-1>best.level)best.level=level-1; best.runs=(best.runs||0)+1; if(TOKEN){ api('/scores',{method:'POST',body:Object.assign({mode:'JOURNEY',light:score,level:level,maxRadiance:rad},deviceInfo())}); } }
   var inputTimer=null;
   function clearInputTimer(){if(inputTimer){clearInterval(inputTimer);inputTimer=null;}}
   function startInputTimer(){clearInputTimer();var rem=Math.max(GC.recallBaseSec,seq.length*GC.recallPerTileSec);id('status').textContent='Your turn - '+rem+'s';inputTimer=setInterval(function(){rem--;if(rem<=0){clearInputTimer();if(phase==='recall'){wilt();}return;}id('status').textContent='Your turn - '+rem+'s';},1000);}
-  function wilt(){lives--;rad=1;phase='idle';hud();var _cost=level*GC.budCostPerLevel,_canBuy=(boughtBuds<GC.maxBuyBuds&&score>=_cost);if(lives<=0){endRun();needReset=true;if(_canBuy){id('status').textContent='Out of Buds! Buy a Bud or Play again.';showBtn('Play again');offerBuy(_cost);}else{id('status').textContent='The garden dims. Light: '+score+'.';showBtn('Play again');hideBuy();}scheduleBoard();}else{needReset=false;id('status').textContent='';showBtn('Retry');if(_canBuy)offerBuy(_cost);else hideBuy();}}
+  function wilt(){lives--;rad=1;phase='idle';hud();var _cost=level*GC.budCostPerLevel,_canBuy=(boughtBuds<GC.maxBuyBuds&&score>=_cost);if(lives<=0){endRun();needReset=true;if(_canBuy){id('status').textContent='Out of Buds! Buy a Bud or Play again.';showBtn('Play again');offerBuy(_cost);}else{id('status').textContent='The garden dims. Light: '+score+'.';showBtn('Play again');hideBuy();}offerAd();scheduleBoard();}else{needReset=false;id('status').textContent='';showBtn('Retry');if(_canBuy)offerBuy(_cost);else hideBuy();hideAd();}}
   function offerBuy(cost){var b=id('buyBtn');if(b){b.style.display='';b.textContent='Buy a Bud ('+cost+' light)';}}
   function hideBuy(){var b=id('buyBtn');if(b)b.style.display='none';}
-  window.buyBud=function(){clearBoardTimer();clearInputTimer();var cost=level*GC.budCostPerLevel;if(boughtBuds>=GC.maxBuyBuds){toast(M('buds_max'));return;}if(score<cost){toast(M('buds_low'));return;}score-=cost;lives++;boughtBuds++;needReset=false;phase='idle';hud();hideBuy();id('status').textContent='Bud restored! '+lives+' left. Tap to continue.';showBtn('Retry');};
+  function offerAd(){ if(window.GB_NATIVE && adBuds<2){ var b=id('adBtn'); if(b)b.style.display=''; } }
+  function hideAd(){ var b=id('adBtn'); if(b)b.style.display='none'; }
+  window.nativeRewarded=function(){ if(window.GBNative&&window.GBNative.postMessage){ GBNative.postMessage(JSON.stringify({action:'rewarded'})); } else { toast('Rewarded ads are available in the app.'); } };
+  window.onAdReward=function(){ adBuds++; lives++; needReset=false; phase='idle'; hud(); hideBuy(); hideAd(); id('status').textContent='Free Bud added — thanks for watching! '+lives+' left. Tap to continue.'; showBtn('Retry'); };
+  window.buyBud=function(){clearBoardTimer();clearInputTimer();var cost=level*GC.budCostPerLevel;if(boughtBuds>=GC.maxBuyBuds){toast(M('buds_max'));return;}if(score<cost){toast(M('buds_low'));return;}score-=cost;lives++;boughtBuds++;needReset=false;phase='idle';hud();hideBuy();hideAd();id('status').textContent='Bud restored! '+lives+' left. Tap to continue.';showBtn('Retry');};
   function hud(){id('hLevel').textContent=level;id('hScore').textContent=score;id('hRad').textContent='x'+(Math.round(rad*10)/10);id('hLives').textContent=lives;}
   function flash(i,c,ms){els[i].classList.add(c);setTimeout(function(){els[i].classList.remove(c);},ms||450);}
   function showBtn(t){var b=id('btn');if(t){b.style.display='';b.textContent=t;}else{b.style.display='none';}}
-  window.startGame=function(){ clearBoardTimer(); clearInputTimer(); finalizeGame(); level=1;score=0;rad=1;lives=GC.startBuds;phase='idle';boughtBuds=0;needReset=false;logged=false; hud(); hideBuy(); id('status').textContent='Tap Start, watch the pattern, then tap it back.'; showBtn('Start'); if(id('gName'))id('gName').textContent=toTitle(account.name); show('s-game'); };
+  window.startGame=function(){ clearBoardTimer(); clearInputTimer(); finalizeGame(); level=1;score=0;rad=1;lives=GC.startBuds;phase='idle';boughtBuds=0;adBuds=0;needReset=false;logged=false; hud(); hideBuy(); id('status').textContent='Tap Start, watch the pattern, then tap it back.'; showBtn('Start'); if(id('gName'))id('gName').textContent=toTitle(account.name); show('s-game'); };
   window.quitToHome=function(){ clearBoardTimer(); clearInputTimer(); stopCountdown(); finalizeGame(); refreshHome(); show('s-home'); };
-  window.onMainBtn=function(){ if(phase!=='idle')return; clearBoardTimer(); clearInputTimer(); hideBuy(); if(needReset){ finalizeGame(); level=1;score=0;rad=1;lives=GC.startBuds;boughtBuds=0;needReset=false;logged=false; hud(); } newRound(); };
+  window.onMainBtn=function(){ if(phase!=='idle')return; clearBoardTimer(); clearInputTimer(); hideBuy(); if(needReset){ finalizeGame(); level=1;score=0;rad=1;lives=GC.startBuds;boughtBuds=0;adBuds=0;needReset=false;logged=false; hud(); } newRound(); };
   function newRound(){ best.runs++;
     stopCountdown(); input=[];seq=[];var len=GC.lenBase+Math.ceil(level/GC.lenStepLevels);
     for(var k=0;k<len;k++)seq.push(Math.floor(Math.random()*9));

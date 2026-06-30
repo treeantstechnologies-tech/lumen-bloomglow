@@ -40,7 +40,22 @@
   .hidden{display:none;}
   .badge{font-size:11px;padding:2px 7px;border-radius:10px;}
   .badge.y{background:rgba(123,224,192,.18);color:#7BE0C0;} .badge.n{background:rgba(255,180,71,.18);color:#FFC36B;}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;margin:4px 0 8px;}
+  .kpi{background:linear-gradient(160deg,rgba(124,91,255,.16),rgba(255,167,38,.07));border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:12px;}
+  .kpi .v{font-size:22px;font-weight:800;}
+  .kpi .l{font-size:11.5px;color:#9aa3c7;margin-top:2px;}
+  .kpi .s{font-size:11px;color:#7BE0C0;margin-top:3px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(max-width:680px){.grid2{grid-template-columns:1fr;}}
+  .chartbox{position:relative;height:240px;}
+  .chartbox.sm{height:190px;}
+  .storecards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;}
+  .storecard{border:1px dashed rgba(255,255,255,.18);border-radius:12px;padding:14px;background:rgba(255,255,255,.03);}
+  .storecard .v{font-size:20px;font-weight:800;color:#8a93b2;}
+  .storecard .l{font-size:12px;color:#9aa3c7;margin-top:3px;}
+  .tag-off{display:inline-block;font-size:10.5px;padding:2px 8px;border-radius:10px;background:rgba(255,180,71,.16);color:#FFC36B;margin-top:8px;}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -59,7 +74,8 @@
 
   <div id="dash" class="hidden">
     <div class="tabs">
-      <button class="on" data-t="email" onclick="tab('email')">Email config</button>
+      <button class="on" data-t="dashboard" onclick="tab('dashboard')">Dashboard</button>
+      <button data-t="email" onclick="tab('email')">Email config</button>
       <button data-t="test" onclick="tab('test')">Test email</button>
       <button data-t="overview" onclick="tab('overview')">Overview</button>
       <button data-t="messages" onclick="tab('messages')">Messages</button>
@@ -68,7 +84,31 @@
       <button class="alt" style="margin-left:auto;padding:8px 14px" onclick="logout()">Log out</button>
     </div>
 
-    <div id="t-email" class="card">
+    <div id="t-dashboard" class="card">
+      <h2>Overview &amp; analytics</h2>
+      <div class="kpis" id="kpiGrid"></div>
+      <div class="grid2" style="margin-top:6px">
+        <div><div class="muted" style="margin-bottom:4px">30-day activity</div><div class="chartbox"><canvas id="chTrend"></canvas></div></div>
+        <div class="grid2">
+          <div><div class="muted" style="margin-bottom:4px">Sign-up method</div><div class="chartbox sm"><canvas id="chProvider"></canvas></div></div>
+          <div><div class="muted" style="margin-bottom:4px">Platform</div><div class="chartbox sm"><canvas id="chPlatform"></canvas></div></div>
+        </div>
+      </div>
+      <h2 style="margin-top:18px">Top players (all-time)</h2>
+      <table><thead><tr><th>#</th><th>Player</th><th>Best level</th><th>Best light</th></tr></thead><tbody id="dashLb"></tbody></table>
+      <h2 style="margin-top:18px">Feedback</h2>
+      <div id="dashFb" class="muted"></div>
+      <h2 style="margin-top:18px">Revenue &amp; store downloads</h2>
+      <div class="storecards">
+        <div class="storecard"><div class="v">&mdash;</div><div class="l">Ad revenue (AdMob)</div><div class="tag-off">Not connected</div></div>
+        <div class="storecard"><div class="v">&mdash;</div><div class="l">Play Store installs</div><div class="tag-off">Not connected</div></div>
+        <div class="storecard"><div class="v">&mdash;</div><div class="l">App Store installs</div><div class="tag-off">Not connected</div></div>
+      </div>
+      <div class="muted" id="extNote" style="margin-top:10px"></div>
+      <div id="dashOut" class="out"></div>
+    </div>
+
+    <div id="t-email" class="card hidden">
       <h2>Email delivery</h2>
       <label>Provider</label>
       <select id="cProvider" onchange="toggleProvider()">
@@ -169,15 +209,17 @@
     TOKEN = r.data.token; lsSet('gb_admin_token', TOKEN); enterDash();
   }
   function logout(){ TOKEN=null; lsDel('gb_admin_token'); id('dash').classList.add('hidden'); id('loginCard').classList.remove('hidden'); }
-  function enterDash(){ id('loginCard').classList.add('hidden'); id('dash').classList.remove('hidden'); loadConfig(); }
+  function enterDash(){ id('loginCard').classList.add('hidden'); id('dash').classList.remove('hidden'); tab('dashboard'); }
 
   function tab(t){
-    ['email','test','overview','messages','game','feedback'].forEach(function(x){ id('t-'+x).classList.toggle('hidden', x!==t); });
+    ['dashboard','email','test','overview','messages','game','feedback'].forEach(function(x){ id('t-'+x).classList.toggle('hidden', x!==t); });
     document.querySelectorAll('.tabs button[data-t]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-t')===t); });
     if(t==='overview') loadOverview();
     if(t==='messages') loadMessages();
     if(t==='game'){ loadGameConfig(); loadGameHistory(); }
     if(t==='feedback') loadFeedback();
+    if(t==='dashboard') loadDashboard();
+    if(t==='email') loadConfig();
   }
   function toggleProvider(){
     var p = id('cProvider').value;
@@ -312,6 +354,49 @@
       var rt=Number(x.rating)||0; var stars= rt? ('\u2605'.repeat(rt)+'\u2606'.repeat(5-rt)) : '-';
       return '<tr><td>'+new Date(x.createdAt).toLocaleString()+'</td><td>'+escapeHtml(x.name||x.email||'-')+'</td><td>'+escapeHtml(x.category||'-')+'</td><td style="color:#FFC107">'+stars+'</td><td>'+escapeHtml(x.message||'')+'</td><td>'+escapeHtml(x.platform||'-')+'</td></tr>';
     }).join('') || '<tr><td colspan="6" class="muted">'+(((r.data&&r.data.error))?'Feedback table not created yet - run the SQL in pgAdmin.':'No feedback yet.')+'</td></tr>';
+  }
+
+  var _charts={};
+  function _destroyCharts(){ for(var k in _charts){ try{_charts[k].destroy();}catch(e){} } _charts={}; }
+  function _seriesMap(arr){ var m={}; (arr||[]).forEach(function(r){ m[r.d]=Number(r.c)||0; }); return m; }
+  function _last30(){ var out=[]; var d=new Date(); for(var i=29;i>=0;i--){ out.push(new Date(d.getTime()-i*86400000).toISOString().slice(0,10)); } return out; }
+  async function loadDashboard(){
+    var r=await api('/dashboard');
+    if(r.status===401){ logout(); return; }
+    if(!r.ok){ showOut('dashOut',false,'Failed to load dashboard ('+((r.data&&r.data.error)||r.status)+').'+((r.data&&r.data.detail)?('\n'+r.data.detail):'')); return; }
+    var d=r.data, k=d.kpis||{}, a=k.active||{};
+    var cards=[
+      ['Total users',k.users,(k.verified||0)+' verified'],
+      ['New today',k.new1,(k.new7||0)+' this week'],
+      ['New (30 days)',k.new30,''],
+      ['Active today',a.d1||0,(a.d7||0)+' WAU · '+(a.d30||0)+' MAU'],
+      ['Games played',k.games,'avg lvl '+(k.avgLevel||0)],
+      ['Total light',k.totalLight,'avg '+(k.avgScore||0)],
+      ['Best level',k.maxLevel,''],
+      ['Best score',k.maxScore,'']
+    ];
+    id('kpiGrid').innerHTML=cards.map(function(c){return '<div class="kpi"><div class="v">'+c[1]+'</div><div class="l">'+escapeHtml(c[0])+'</div>'+(c[2]?'<div class="s">'+escapeHtml(String(c[2]))+'</div>':'')+'</div>';}).join('');
+    id('dashLb').innerHTML=(d.leaderboard||[]).map(function(x,i){return '<tr><td>'+(i+1)+'</td><td>'+escapeHtml(x.name||'Player')+'</td><td>'+(x.level||0)+'</td><td>'+(x.light||0)+'</td></tr>';}).join('')||'<tr><td colspan="4" class="muted">No games yet.</td></tr>';
+    var fb=d.feedback||{count:0,avg:0,byCat:[]};
+    id('dashFb').innerHTML=fb.count?('<b style="color:#fff">'+fb.count+'</b> submissions · avg rating <b style="color:#FFC107">'+fb.avg+'★</b>'+((fb.byCat&&fb.byCat.length)?(' · '+fb.byCat.map(function(c){return escapeHtml(c.cat)+': '+c.c;}).join(', ')):'')):'No feedback yet.';
+    id('extNote').textContent=(d.external&&d.external.note)||'';
+    if(typeof Chart==='undefined'){ return; }
+    _destroyCharts();
+    Chart.defaults.color='#9aa3c7'; Chart.defaults.font.size=11;
+    var labels=_last30(), sl=labels.map(function(l){return l.slice(5);});
+    var reg=_seriesMap(d.series&&d.series.registrations), lg=_seriesMap(d.series&&d.series.logins), gm=_seriesMap(d.series&&d.series.games);
+    var mk=function(m){return labels.map(function(l){return m[l]||0;});};
+    _charts.trend=new Chart(id('chTrend'),{type:'line',data:{labels:sl,datasets:[
+      {label:'Sign-ups',data:mk(reg),borderColor:'#FFA726',backgroundColor:'rgba(255,167,38,.15)',tension:.3,fill:true,pointRadius:0},
+      {label:'Logins',data:mk(lg),borderColor:'#7C9BFF',backgroundColor:'rgba(124,155,255,.10)',tension:.3,fill:true,pointRadius:0},
+      {label:'Games',data:mk(gm),borderColor:'#7BE0C0',backgroundColor:'rgba(123,224,192,.10)',tension:.3,fill:true,pointRadius:0}
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:12}}},scales:{y:{beginAtZero:true,ticks:{precision:0}},x:{ticks:{maxTicksLimit:8}}}}});
+    var dOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12}}}};
+    var PAL=['#7C5BFF','#FFA726','#7BE0C0','#FF7AC6','#7C9BFF','#FFC36B','#8a93b2'];
+    var pv=d.providers||[];
+    _charts.prov=new Chart(id('chProvider'),{type:'doughnut',data:{labels:pv.map(function(x){return x.p;}),datasets:[{data:pv.map(function(x){return x.c;}),backgroundColor:PAL,borderWidth:0}]},options:dOpts});
+    var pl=d.platforms||[];
+    _charts.plat=new Chart(id('chPlatform'),{type:'doughnut',data:{labels:pl.map(function(x){return x.p;}),datasets:[{data:pl.map(function(x){return x.c;}),backgroundColor:PAL,borderWidth:0}]},options:dOpts});
   }
 
   if(TOKEN){ enterDash(); }

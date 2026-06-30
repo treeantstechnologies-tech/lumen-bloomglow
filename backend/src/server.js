@@ -381,4 +381,6 @@ app.post("/glade/sync", requireAuth, async (req, res) => {
   res.json({ glade });
 });
 
-const PORT = process.env.PORT 
+const PORT = process.env.PORT  || 4000;
+app.listen(PORT, () => console.log("Glowbloom backend listening on :" + PORT));
+module.exports = app;

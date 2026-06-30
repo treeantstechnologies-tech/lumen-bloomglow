@@ -696,7 +696,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   window.startGame=function(){ clearBoardTimer(); clearInputTimer(); finalizeGame(); level=1;score=0;rad=1;lives=GC.startBuds;phase='idle';boughtBuds=0;adBuds=0;needReset=false;logged=false; hud(); hideBuy(); id('status').textContent='Tap Start, watch the pattern, then tap it back.'; showBtn('Start'); if(id('gName'))id('gName').textContent=toTitle(account.name); show('s-game'); };
   window.quitToHome=function(){ clearBoardTimer(); clearInputTimer(); stopCountdown(); finalizeGame(); refreshHome(); show('s-home'); };
   window.onMainBtn=function(){ if(phase!=='idle')return; clearBoardTimer(); clearInputTimer(); hideBuy(); if(needReset){ finalizeGame(); level=1;score=0;rad=1;lives=GC.startBuds;boughtBuds=0;adBuds=0;needReset=false;logged=false; hud(); } newRound(); };
-  function newRound(){ best.runs++;
+  function newRound(){
     stopCountdown(); input=[];seq=[];var len=GC.lenBase+Math.ceil(level/GC.lenStepLevels);
     for(var k=0;k<len;k++)seq.push(Math.floor(Math.random()*9));
     phase='reveal'; showBtn(null); id('status').textContent='Watch closely...';
@@ -715,7 +715,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
       setTimeout(startCountdown,640);
     }
   }
-  function endRun(){ stopCountdown(); if(score>best.score)best.score=score; if(level-1>best.level)best.level=level-1; best.runs=(best.runs||0)+1; if(TOKEN){ api('/scores',{method:'POST',body:{mode:'JOURNEY',light:score,level:level,maxRadiance:rad}}); } }
+  function endRun(){ stopCountdown(); finalizeGame(); }
   function startCountdown(){ remaining=3.0;paused=false; id('cbar').style.display='block'; id('pauseBtn').style.display=''; id('pauseBtn').textContent='Pause'; showBtn(null); renderCount(); timer=setInterval(function(){ if(paused)return; remaining-=0.1; if(remaining<=0){stopCountdown();newRound();return;} renderCount(); },100); }
   function renderCount(){ id('cfill').style.width=(Math.max(0,remaining)/3*100)+'%'; id('status').textContent='Next round in '+Math.ceil(remaining)+'s...'; }
   function stopCountdown(){ if(timer){clearInterval(timer);timer=null;} id('cbar').style.display='none'; id('pauseBtn').style.display='none'; }

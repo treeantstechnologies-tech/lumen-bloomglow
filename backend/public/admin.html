@@ -81,6 +81,7 @@
       <button data-t="messages" onclick="tab('messages')">Messages</button>
       <button data-t="game" onclick="tab('game')">Game</button>
       <button data-t="feedback" onclick="tab('feedback')">Feedback</button>
+      <button data-t="about" onclick="tab('about')">About</button>
       <button class="alt" style="margin-left:auto;padding:8px 14px" onclick="logout()">Log out</button>
     </div>
 
@@ -183,6 +184,53 @@
       <table><thead><tr><th>When</th><th>User</th><th>Type</th><th>Rating</th><th>Message</th><th>Platform</th></tr></thead><tbody id="fbTbl"></tbody></table>
       <div id="fbOut" class="out"></div>
     </div>
+
+    <div id="t-about" class="card hidden">
+      <h2>About Glowbloom</h2>
+      <div class="muted" style="line-height:1.7">Glowbloom is a brain-training game suite by <b>TreeAnts Technologies</b>. It runs as a responsive single-screen web app, wrapped in a native Android/iOS shell (Flutter WebView) with native Google sign-in and Google AdMob. Phase 1 ships a memory game; three more brain games are planned, each targeting a different cognitive skill.</div>
+
+      <h2 style="margin-top:20px">Games</h2>
+      <table>
+        <thead><tr><th>Game</th><th>Skill</th><th>Status</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><b>Glowbloom Memory</b></td><td>Sequence memory</td><td><span class="badge y">Live</span></td><td>Watch the glowbuds light up, then tap them back in order. Levels grow; Buds = lives, Light = score, Radiance = streak multiplier. Buy-a-Bud, 10s input timer, Sargam/Beeps/Mute sounds.</td></tr>
+          <tr><td><b>Bloomstorm</b></td><td>Speed &amp; focus</td><td><span class="badge n">Planned</span></td><td>Tap blooming flowers fast, resist wilting decoys, build combos. Trains processing speed and impulse control.</td></tr>
+          <tr><td><b>Lumen Trails</b></td><td>Spatial memory</td><td><span class="badge n">Planned</span></td><td>A glowing path flashes across a grid; retrace it from memory while avoiding hazards.</td></tr>
+          <tr><td><b>Spectra</b></td><td>Logic &amp; deduction</td><td><span class="badge n">Planned</span></td><td>Arrange coloured light orbs to satisfy clue constraints &mdash; a calmer, puzzle-style challenge.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 style="margin-top:20px">Player features</h2>
+      <ul style="margin:6px 0 0 18px;line-height:1.8;font-size:13px">
+        <li><b>Registration &amp; login</b> &mdash; Google (native on app, popup on web), Email OTP (Microsoft Graph), Mobile (optional). Email is mandatory and verified; first/last name, birth-year and device/IP captured.</li>
+        <li><b>Profile</b> &mdash; upload a photo, view name/email, and share your stats &amp; rank via the native share sheet.</li>
+        <li><b>Feedback</b> &mdash; players send a category (Idea/Bug/Other) + 1&ndash;5 star rating + message, stored in the database.</li>
+        <li><b>Leaderboards</b> &mdash; Today / Week / Month / Overall windows (IST), ties share a rank, crown for #1.</li>
+        <li><b>Home dashboard</b> &mdash; games played, total Light, average and best level &amp; score.</li>
+        <li><b>Sessions</b> &mdash; stay signed in for 24 hours or until logout. <b>How to play</b> available from login and home.</li>
+        <li><b>Design</b> &mdash; single-screen, no-scroll layout on every device; TreeAnts vibrant theme; 3-second branded splash.</li>
+      </ul>
+
+      <h2 style="margin-top:20px">Admin module (this panel)</h2>
+      <ul style="margin:6px 0 0 18px;line-height:1.8;font-size:13px">
+        <li><b>Dashboard</b> &mdash; KPIs (users, new, active DAU/WAU/MAU), 30-day sign-up/login/games trends, sign-up-method &amp; platform breakdowns, top players, feedback summary.</li>
+        <li><b>Email config</b> &mdash; choose provider (Microsoft Graph primary, Amazon SES optional), set the sender mailbox and credentials; applies live, no restart.</li>
+        <li><b>Test email</b> &mdash; send a branded test and see the exact provider error on failure.</li>
+        <li><b>Overview</b> &mdash; recent registrations and auth events with device/platform/IP.</li>
+        <li><b>Messages</b> &mdash; edit any user-facing alert text; new alerts appear here automatically; blank = reset to default.</li>
+        <li><b>Game</b> &mdash; tune difficulty &amp; scoring live (pattern growth, recall time, starting/buyable Buds, bud cost, Light per tile, round bonus); every change is logged to a DB history.</li>
+        <li><b>Feedback</b> &mdash; read everything players have submitted.</li>
+        <li><b>About</b> &mdash; this page.</li>
+      </ul>
+
+      <h2 style="margin-top:20px">Monetization</h2>
+      <div class="muted" style="line-height:1.7;font-size:13px">Google <b>AdMob</b> in the app: a banner on every screen plus a rewarded ad (&ldquo;watch for a free Bud&rdquo;). Currently using Google <b>test</b> ad IDs &mdash; replace with real IDs and add <code>app-ads.txt</code> before publishing. Revenue and Play/App Store install numbers require connecting AdMob, Google Play Console and App Store Connect APIs (shown as &ldquo;Not connected&rdquo; on the Dashboard until then).</div>
+
+      <h2 style="margin-top:20px">Architecture &amp; data</h2>
+      <div class="muted" style="line-height:1.7;font-size:13px">Node/Express + Prisma + PostgreSQL backend on AWS EC2 (nginx + SSL + PM2). Flutter WebView wrapper for Android/iOS with native Google sign-in and AdMob bridges. Stored data: user profile, auth logs (device/browser/IP/platform), scores, light totals, feedback, and game-config change history.</div>
+
+      <div class="muted" style="margin-top:18px;font-size:11.5px">&copy; 2026 TreeAnts Technologies. All rights reserved.</div>
+    </div>
   </div>
 </div>
 
@@ -212,7 +260,7 @@
   function enterDash(){ id('loginCard').classList.add('hidden'); id('dash').classList.remove('hidden'); tab('dashboard'); }
 
   function tab(t){
-    ['dashboard','email','test','overview','messages','game','feedback'].forEach(function(x){ id('t-'+x).classList.toggle('hidden', x!==t); });
+    ['dashboard','email','test','overview','messages','game','feedback','about'].forEach(function(x){ id('t-'+x).classList.toggle('hidden', x!==t); });
     document.querySelectorAll('.tabs button[data-t]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-t')===t); });
     if(t==='overview') loadOverview();
     if(t==='messages') loadMessages();

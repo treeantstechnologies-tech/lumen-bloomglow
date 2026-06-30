@@ -334,9 +334,63 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
 .bs-float{position:absolute;font-weight:800;color:#FFE08A;pointer-events:none;animation:bsFloat .7s ease forwards;font-size:14px;text-shadow:0 1px 3px rgba(0,0,0,.5);}
 @keyframes bsFloat{to{transform:translateY(-34px);opacity:0;}}
 </style>
+<style id="gb-trails">
+#s-trails.active{overflow:hidden;justify-content:flex-start;}
+.lt-stage{flex:0 0 auto;display:flex;align-items:center;justify-content:center;margin:clamp(12px,3vh,30px) auto clamp(8px,1.5vh,16px);perspective:780px;}
+#ltBoard{display:grid;gap:7px;width:min(82vw,calc(100svh - 360px));aspect-ratio:1;transform:rotateX(17deg);transform-style:preserve-3d;}
+.lt-cell{aspect-ratio:1;border-radius:12px;background:linear-gradient(160deg,rgba(124,91,255,.12),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.10);box-shadow:0 5px 0 rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.06);transition:transform .12s,box-shadow .25s,background .2s;cursor:pointer;position:relative;}
+.lt-cell.lit{background:radial-gradient(circle at 50% 40%,#FFE9A8,#FB8C00);border-color:#fff;box-shadow:0 0 22px 6px rgba(251,140,0,.6),0 5px 0 rgba(0,0,0,.22);transform:translateZ(16px) scale(1.05);}
+.lt-cell.ok{background:radial-gradient(circle at 50% 40%,#9BE9AE,#2E9E4F);border-color:#fff;box-shadow:0 0 18px 4px rgba(67,192,106,.55),0 5px 0 rgba(0,0,0,.22);transform:translateZ(10px);}
+.lt-cell.bad{background:radial-gradient(circle at 50% 40%,#FF9C9C,#D64545);border-color:#ffc2c2;animation:bsShakeIn .3s ease;}
+</style>
+<style id="gb-3dbg">
+#gb3d{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+.phone{position:relative;z-index:1;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  function init(){
+    if(!window.THREE){ return false; }
+    var cv=document.getElementById('gb3d'); if(!cv||cv._on){ return true; } cv._on=1;
+    try{
+      var renderer=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true});
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+      var scene=new THREE.Scene(), cam=new THREE.PerspectiveCamera(60,1,0.1,100); cam.position.z=18;
+      var N=320, geo=new THREE.BufferGeometry(), pos=new Float32Array(N*3), col=new Float32Array(N*3);
+      var pal=[[1,0.66,0.2],[0.78,0.43,1],[0.48,0.88,0.7]];
+      for(var i=0;i<N;i++){ pos[i*3]=(Math.random()-0.5)*46; pos[i*3+1]=(Math.random()-0.5)*46; pos[i*3+2]=(Math.random()-0.5)*30; var c=pal[i%3]; col[i*3]=c[0];col[i*3+1]=c[1];col[i*3+2]=c[2]; }
+      geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+      geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+      var mat=new THREE.PointsMaterial({size:0.5,vertexColors:true,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,depthWrite:false});
+      var pts=new THREE.Points(geo,mat); scene.add(pts);
+      function resize(){ var w=window.innerWidth,h=window.innerHeight; renderer.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); }
+      resize(); window.addEventListener('resize',resize);
+      var running=true;
+      document.addEventListener('visibilitychange',function(){ running=!document.hidden; if(running)loop(); });
+      function loop(){ if(!running)return; pts.rotation.y+=0.0009; pts.rotation.x+=0.0004; renderer.render(scene,cam); requestAnimationFrame(loop); }
+      loop();
+    }catch(e){}
+    return true;
+  }
+  if(!init()){ window.addEventListener('load',init); setTimeout(init,1500); }
+})();
+</script>
+<style id="gb-hub">
+#s-games .gamegrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+#s-games .gametile{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;gap:6px;padding:18px 12px 16px;border-radius:18px;border:1px solid rgba(255,167,38,.22);background:linear-gradient(160deg,rgba(124,91,255,.18),rgba(255,167,38,.08));color:#fff;cursor:pointer;position:relative;min-height:142px;transition:transform .12s,filter .15s;box-shadow:0 8px 20px rgba(0,0,0,.3);}
+#s-games .gametile:hover{filter:brightness(1.08);transform:translateY(-2px);}
+#s-games .gametile:active{transform:scale(.98);}
+#s-games .gametile .gi{font-size:34px;line-height:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.35));}
+#s-games .gametile .gt{font-family:'Fredoka','Poppins',sans-serif;font-weight:700;font-size:15px;letter-spacing:.2px;line-height:1.15;}
+#s-games .gametile .gd{font-size:11.5px;color:#aab2d6;line-height:1.3;}
+#s-games .gametile.off{opacity:.62;cursor:not-allowed;background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border-color:rgba(255,255,255,.10);}
+#s-games .gametile .soon{margin-top:2px;font-size:9.5px;font-weight:700;background:rgba(255,180,71,.2);color:#FFC36B;padding:2px 9px;border-radius:9px;letter-spacing:.3px;text-transform:uppercase;}
+</style>
 </head>
 
 <body>
+<canvas id="gb3d"></canvas>
 <div id="splash"><div class="splashbox"><img class="splashlogo" src="glowbloom_logo.png" alt="glowbloom"/><div class="splashtag">Where memory blooms into light.</div><div class="splashby"><span>built by</span><img src="treeants.png" alt="TreeAnts Technologies"/></div></div></div>
 <div class="phone">
   <div class="brand"><img class="brandlogo" src="glowbloom_logo.png" alt="glowbloom"/></div>
@@ -514,11 +568,11 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   <!-- 7c. GAMES HUB -->
   <div class="screen card" id="s-games">
     <div class="topbar"><button class="icon-btn" onclick="show('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t">Games</span><span style="width:34px;display:inline-block"></span></div>
-    <div class="gamelist">
-      <button class="gamecard" onclick="startGame()"><span class="gi">&#129504;</span><span><span class="gt">Glowbloom Memory</span><span class="gd">Repeat the glowing sequence</span></span></button>
-      <button class="gamecard" onclick="bsOpen()"><span class="gi">&#127785;</span><span><span class="gt">Bloomstorm</span><span class="gd">Tap blooms, dodge wilts &mdash; fast!</span></span></button>
-      <button class="gamecard off" disabled><span class="gi">&#128739;</span><span><span class="gt">Lumen Trails <span class="soon">soon</span></span><span class="gd">Memorise &amp; retrace the path</span></span></button>
-      <button class="gamecard off" disabled><span class="gi">&#127912;</span><span><span class="gt">Spectra <span class="soon">soon</span></span><span class="gd">Solve the light-logic puzzle</span></span></button>
+    <div class="gamegrid">
+      <button class="gametile" onclick="startGame()"><span class="gi">&#129504;</span><span class="gt">Glowbloom Memory</span><span class="gd">Repeat the glowing sequence</span></button>
+      <button class="gametile" onclick="bsOpen()"><span class="gi">&#127785;</span><span class="gt">Bloomstorm</span><span class="gd">Tap blooms, dodge wilts</span></button>
+      <button class="gametile" onclick="ltOpen()"><span class="gi">&#128739;</span><span class="gt">Lumen Trails</span><span class="gd">Retrace the glowing path</span></button>
+      <button class="gametile off" disabled><span class="gi">&#127912;</span><span class="gt">Spectra</span><span class="gd">Light-logic puzzle</span><span class="soon">Coming soon</span></button>
     </div>
   </div>
 
@@ -534,6 +588,21 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
     <div class="controls">
       <button class="btn sm" id="bsBtn" onclick="bsMain()">Start</button>
       <div id="bsStatus">Tap the blooming flowers &mdash; avoid the red wilts!</div>
+    </div>
+  </div>
+
+  <!-- 7e. LUMEN TRAILS -->
+  <div class="screen card" id="s-trails">
+    <div class="topbar"><button class="icon-btn" onclick="ltQuit()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t"><img class="brandlogo" src="glowbloom_logo.png" alt="glowbloom"/></span><span id="ltName" style="color:#9aa3c7;font-size:12px"></span></div>
+    <div class="hud">
+      <div class="pill"><div class="l">Level</div><div class="v" id="ltLevel">1</div></div>
+      <div class="pill"><div class="l">Light</div><div class="v" id="ltScore">0</div></div>
+      <div class="pill"><div class="l">Buds</div><div class="v" id="ltLives" style="color:#7BE0C0">3</div></div>
+    </div>
+    <div class="lt-stage"><div id="ltBoard"></div></div>
+    <div class="controls">
+      <button class="btn sm" id="ltBtn" onclick="ltMain()">Start</button>
+      <div id="ltStatus">Watch the glowing trail, then retrace it.</div>
     </div>
   </div>
 
@@ -561,7 +630,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   function hideSplash(){ var sp=id('splash'); if(sp){ sp.classList.add('hide'); setTimeout(function(){ if(sp){ sp.style.display='none'; } },560); } }
   function flashSplash(ms){ var sp=id('splash'); if(!sp)return; sp.style.display='flex'; void sp.offsetWidth; sp.classList.remove('hide'); setTimeout(hideSplash, ms||1000); }
   window.flashSplash=flashSplash;
-  function show(s){document.querySelectorAll('.screen').forEach(function(e){e.classList.remove('active');});id(s).classList.add('active');document.body.classList.toggle('playing', s==='s-game'||s==='s-home'||s==='s-bstorm'||s==='s-games');window.scrollTo(0,0);try{if(typeof applyAvatar==='function')applyAvatar();}catch(e){}}
+  function show(s){document.querySelectorAll('.screen').forEach(function(e){e.classList.remove('active');});id(s).classList.add('active');document.body.classList.toggle('playing', s==='s-game'||s==='s-home'||s==='s-bstorm'||s==='s-games'||s==='s-trails');window.scrollTo(0,0);try{if(typeof applyAvatar==='function')applyAvatar();}catch(e){}}
   // disable zoom (pinch, ctrl+wheel, ctrl +/-/0, gesture)
   document.addEventListener('wheel',function(e){ if(e.ctrlKey) e.preventDefault(); },{passive:false});
   document.addEventListener('keydown',function(e){ if((e.ctrlKey||e.metaKey)&&['+','-','=','0'].indexOf(e.key)>=0) e.preventDefault(); });
@@ -707,6 +776,20 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   function bsFloat(c,t){ var f=document.createElement('div'); f.className='bs-float'; f.textContent=t; c.appendChild(f); setTimeout(function(){ if(f.parentNode)f.parentNode.removeChild(f); },720); }
   function bsEnd(){ bsActive=false; bsClearTimers(); bsCells.forEach(function(c){c.className='bs-cell';c.textContent='';}); if(id('bsStatus'))id('bsStatus').textContent='Time! You scored '+bsScore+' light.'; var b=id('bsBtn'); if(b){b.style.display='';b.textContent='Play again';} if(TOKEN&&bsScore>0){ api('/scores',{method:'POST',body:Object.assign({mode:'BLOOMSTORM',light:bsScore,level:bsCombo,maxRadiance:1},deviceInfo())}); if(typeof loadStats==='function') loadStats(); } }
   window.bsQuit=function(){ if(bsActive){ bsEnd(); } else { bsClearTimers(); } show('s-games'); };
+
+  // ===================== Lumen Trails (spatial memory game) =====================
+  var ltN=5,ltPath=[],ltStep=0,ltLevel=1,ltScore=0,ltLives=3,ltPhase='idle',ltCells=[],ltLock=false;
+  function ltBuild(){ var b=id('ltBoard'); if(!b)return; b.style.gridTemplateColumns='repeat('+ltN+',1fr)'; b.innerHTML=''; ltCells=[]; for(var i=0;i<ltN*ltN;i++){ var c=document.createElement('div'); c.className='lt-cell'; (function(idx){ c.addEventListener('click',function(){ ltTap(idx); }); })(i); b.appendChild(c); ltCells.push(c); } }
+  function ltGenPath(len){ var N=ltN,total=N*N,visited={},start=Math.floor(Math.random()*total),path=[start]; visited[start]=1; var tries=0; while(path.length<len&&tries<500){ tries++; var cur=path[path.length-1],r=Math.floor(cur/N),col=cur%N,nb=[]; if(r>0)nb.push(cur-N); if(r<N-1)nb.push(cur+N); if(col>0)nb.push(cur-1); if(col<N-1)nb.push(cur+1); nb=nb.filter(function(x){return !visited[x];}); if(!nb.length)break; var nx=nb[Math.floor(Math.random()*nb.length)]; visited[nx]=1; path.push(nx); } return path; }
+  function ltClearCells(){ ltCells.forEach(function(c){c.className='lt-cell';c.textContent='';}); }
+  window.ltOpen=function(){ ltBuild(); ltLevel=1;ltScore=0;ltLives=3;ltPhase='idle';ltLock=false; ltClearCells(); id('ltLevel').textContent=1; id('ltScore').textContent=0; id('ltLives').textContent=3; id('ltStatus').textContent='Watch the glowing trail, then retrace it.'; var b=id('ltBtn'); if(b){b.style.display='';b.textContent='Start';} if(id('ltName'))id('ltName').textContent=toTitle((account&&account.name)||''); show('s-trails'); };
+  window.ltMain=function(){ if(ltPhase!=='idle')return; var b=id('ltBtn'); if(b)b.style.display='none'; ltNewRound(); };
+  function ltShow(t,after){ ltStep=0; ltClearCells(); ltPhase='show'; id('ltStatus').textContent='Memorise the trail...'; ltPath.forEach(function(idx,n){ setTimeout(function(){ var c=ltCells[idx]; if(c){ c.className='lt-cell lit'; setTimeout(function(){ if(ltPhase==='show')c.className='lt-cell'; }, t*0.78); } }, t*n+300); }); setTimeout(function(){ ltClearCells(); ltPhase='recall'; id('ltStatus').textContent='Your turn — tap the trail in order.'; if(after)after(); }, t*ltPath.length+520); }
+  function ltNewRound(){ var len=Math.min(2+ltLevel, ltN*ltN-1); ltPath=ltGenPath(len); ltShow(Math.max(360,580-ltLevel*12)); }
+  function ltTap(idx){ if(ltPhase!=='recall'||ltLock)return; if(idx===ltPath[ltStep]){ var c=ltCells[idx]; c.className='lt-cell ok'; ltSpark(c); ltStep++; if(ltStep>=ltPath.length){ ltLock=true; var gain=ltPath.length*10*ltLevel; ltScore+=gain; id('ltScore').textContent=ltScore; id('ltStatus').textContent='Bloomed! +'+gain+' light.'; setTimeout(function(){ ltLevel++; id('ltLevel').textContent=ltLevel; ltLock=false; ltNewRound(); }, 820); } } else { ltLives--; id('ltLives').textContent=Math.max(0,ltLives); var c=ltCells[idx]; c.className='lt-cell bad'; try{navigator.vibrate&&navigator.vibrate(60);}catch(e){} setTimeout(function(){ if(c.className==='lt-cell bad')c.className='lt-cell'; },360); if(ltLives<=0){ ltEnd(); } else { ltLock=true; id('ltStatus').textContent='Wrong tile! '+ltLives+' Buds left — watch again.'; setTimeout(function(){ ltLock=false; ltShow(520); }, 950); } } }
+  function ltSpark(c){ for(var i=0;i<5;i++){ var s=document.createElement('div'); s.className='bs-spark'; var a=Math.random()*6.283; s.style.setProperty('--dx',(Math.cos(a)*26)+'px'); s.style.setProperty('--dy',(Math.sin(a)*26)+'px'); c.appendChild(s); (function(el){ setTimeout(function(){ if(el.parentNode)el.parentNode.removeChild(el); },520); })(s); } }
+  function ltEnd(){ ltPhase='idle'; ltLock=false; id('ltStatus').textContent='Out of Buds! You reached level '+ltLevel+'.'; var b=id('ltBtn'); if(b){b.style.display='';b.textContent='Play again';} if(TOKEN&&ltScore>0){ api('/scores',{method:'POST',body:Object.assign({mode:'TRAILS',light:ltScore,level:ltLevel,maxRadiance:1},deviceInfo())}); if(typeof loadStats==='function')loadStats(); } var keep=ltScore; ltScore=0;ltLevel=1;ltLives=3; setTimeout(function(){ id('ltLevel').textContent=1; id('ltScore').textContent=0; id('ltLives').textContent=3; },60); return keep; }
+  window.ltQuit=function(){ if(ltPhase!=='idle'){ ltEnd(); } else { ltClearCells(); } show('s-games'); };
 
   window.exitApp=function(){ id('exLight').textContent=session.light; id('exLevel').textContent=best.level; stopCountdown(); show('s-exit'); };
   window.reopen=function(){ session.light=0; refreshHome(); show('s-home'); };

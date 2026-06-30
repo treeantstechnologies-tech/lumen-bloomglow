@@ -146,6 +146,8 @@ enum GameMode {
   DAILY
   BLOOMSTORM
   ZEN
+  TRAILS
+  SPECTRA
 }
 
 model Score {

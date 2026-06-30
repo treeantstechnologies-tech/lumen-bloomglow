@@ -148,6 +148,7 @@ enum GameMode {
   ZEN
   TRAILS
   SPECTRA
+  CHIMNI
 }
 
 model Score {

@@ -402,20 +402,28 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
 .sp-slot.win{animation:bsHit .4s ease;}
 </style>
 <style id="gb-lbhowto">
-.lbgames,.howtogames{display:flex;gap:6px;margin-bottom:8px;}
+.lbgames,.howtogames,.homegames{display:flex;gap:6px;margin-bottom:8px;}
 .howtogames{margin:2px 0 10px;}
-.lbgames button,.howtogames button{flex:1;border:none;background:rgba(255,255,255,.05);color:#c9cfeb;padding:7px 4px;border-radius:9px;cursor:pointer;font-size:11px;font-weight:600;}
-.lbgames button.on,.howtogames button.on{background:linear-gradient(135deg,#FFA726,#FB8C00)!important;color:#fff!important;}
+.lbgames button,.howtogames button,.homegames button{flex:1;border:none;background:rgba(255,255,255,.05);color:#c9cfeb;padding:7px 4px;border-radius:9px;cursor:pointer;font-size:11px;font-weight:600;}
+.lbgames button.on,.howtogames button.on,.homegames button.on{background:linear-gradient(135deg,#FFA726,#FB8C00)!important;color:#fff!important;}
 </style>
 <style id="gb-gamefont">
 #s-bstorm .pill .v,#s-trails .pill .v,#s-spectra .pill .v{font-family:'Fredoka','Poppins',sans-serif;}
 #bsStatus,#ltStatus,#spStatus{font-family:'Poppins',sans-serif;color:#c9cfeb;font-size:clamp(11px,1.7vh,13px);}
 .bs-cell,.lt-cell,.sp-slot{box-shadow:inset 0 2px 8px rgba(255,255,255,.06),0 6px 14px rgba(0,0,0,.32);}
 </style>
+<style id="gb-gametop">
+.builtby-fixed{position:fixed;left:50%;bottom:6px;transform:translateX(-50%);z-index:40;display:none;align-items:center;gap:5px;font-size:9.5px;letter-spacing:.3px;color:#8a93b2;opacity:.9;pointer-events:none;}
+.builtby-fixed img{height:11px;opacity:.95;}
+body.playing .builtby-fixed{display:flex;}
+#bsName,#ltName,#spName{color:#fff!important;font-weight:600;}
+#s-bstorm .t.grad,#s-trails .t.grad,#s-spectra .t.grad{font-size:clamp(16px,2.6vh,20px);}
+</style>
 </head>
 
 <body>
 <canvas id="gb3d"></canvas>
+<div class="builtby-fixed"><span>built by</span><img src="treeants.png" alt="TreeAnts Technologies"/></div>
 <div id="splash"><div class="splashbox"><img class="splashlogo" src="glowbloom_logo.png" alt="glowbloom"/><div class="splashtag">Where memory blooms into light.</div><div class="splashby"><span>built by</span><img src="treeants.png" alt="TreeAnts Technologies"/></div></div></div>
 <div class="phone">
   <div class="brand"><img class="brandlogo" src="glowbloom_logo.png" alt="glowbloom"/></div>
@@ -495,6 +503,12 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   <div class="screen card" id="s-home">
     <div class="topbar"><img class="brandlogo" src="glowbloom_logo.png" alt="glowbloom"/><span class="t"></span><button class="icon-btn" aria-label="Settings" title="Settings" onclick="show('s-settings')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></div>
     <div class="muted" style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;"><img id="homeAvatar" class="avatar-sm" alt=""/>Welcome, <span id="who">player</span></div>
+    <div class="homegames" id="homeGames">
+      <button class="on" data-m="JOURNEY" onclick="setHomeMode('JOURNEY')">Memory</button>
+      <button data-m="BLOOMSTORM" onclick="setHomeMode('BLOOMSTORM')">Bloomstorm</button>
+      <button data-m="TRAILS" onclick="setHomeMode('TRAILS')">Trails</button>
+      <button data-m="SPECTRA" onclick="setHomeMode('SPECTRA')">Spectra</button>
+    </div>
     <div class="stats">
       <div class="stat"><div class="v" id="hsRuns">0</div><div class="l">Games played</div></div>
       <div class="stat"><div class="v" id="hsLight">0</div><div class="l">Total light</div></div>
@@ -514,7 +528,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
 
   <!-- 5. GAME -->
   <div class="screen card" id="s-game">
-    <div class="topbar"><button class="icon-btn" onclick="quitToHome()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t"><img class="brandlogo" src="glowbloom_logo.png" alt="glowbloom"/></span><span id="gName" style="color:#9aa3c7;font-size:12px;"></span></div>
+    <div class="topbar"><button class="icon-btn" onclick="quitToHome()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button><span class="t"><img class="brandlogo" src="glowbloom_logo.png" alt="glowbloom"/></span><span id="gName" style="color:#9aa3c7;font-size:12px;"></span></div>
     <div class="hud">
       <div class="pill"><div class="l">Level</div><div class="v" id="hLevel">1</div></div>
       <div class="pill"><div class="l">Light</div><div class="v" id="hScore">0</div></div>
@@ -540,7 +554,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
 
   <!-- 6. LEADERBOARD -->
   <div class="screen card" id="s-lb">
-    <div class="topbar"><button class="icon-btn" onclick="show('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t">Leaderboards</span><button class="icon-btn" title="Share my rank" aria-label="Share my rank" onclick="shareStats()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></button></div>
+    <div class="topbar"><button class="icon-btn" onclick="show('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button><span class="t">Leaderboards</span><button class="icon-btn" title="Share my rank" aria-label="Share my rank" onclick="shareStats()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></button></div>
     <div class="lbgames">
       <button class="on" data-m="JOURNEY" onclick="setLbMode('JOURNEY')">Memory</button>
       <button data-m="BLOOMSTORM" onclick="setLbMode('BLOOMSTORM')">Bloomstorm</button>
@@ -558,7 +572,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
 
   <!-- 7. SETTINGS -->
   <div class="screen card" id="s-settings">
-    <div class="topbar"><button class="icon-btn" onclick="show('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t">Settings</span><span></span></div>
+    <div class="topbar"><button class="icon-btn" onclick="show('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button><span class="t">Settings</span><span></span></div>
     <label>Tap sound</label>
     <div class="seg">
       <button data-m="sargam" class="on" onclick="setSound('sargam')">Sargam (Sa Re Ga Ma)</button>
@@ -571,7 +585,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
 
   <!-- 7b. PROFILE -->
   <div class="screen card" id="s-profile">
-    <div class="topbar"><button class="icon-btn" onclick="show('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t">Profile</span><span style="width:34px;display:inline-block"></span></div>
+    <div class="topbar"><button class="icon-btn" onclick="show('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button><span class="t">Profile</span><span style="width:34px;display:inline-block"></span></div>
     <div class="avatarbox">
       <img id="pfAvatar" class="avatar" alt="Your photo"/>
       <button class="avataredit" type="button" title="Change photo" onclick="id('pfFile').click()">&#128247;</button>
@@ -594,18 +608,18 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
 
   <!-- 7c. GAMES HUB -->
   <div class="screen card" id="s-games">
-    <div class="topbar"><button class="icon-btn" onclick="show('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t">Games</span><span style="width:34px;display:inline-block"></span></div>
+    <div class="topbar"><button class="icon-btn" onclick="show('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button><span class="t">Games</span><span style="width:34px;display:inline-block"></span></div>
     <div class="gamegrid">
-      <button class="gametile" onclick="startGame()"><span class="gi">&#129504;</span><span class="gt">Glowbloom Memory</span><span class="gd">Repeat the glowing sequence</span></button>
-      <button class="gametile" onclick="bsOpen()"><span class="gi">&#127785;</span><span class="gt">Bloomstorm</span><span class="gd">Tap blooms, dodge wilts</span></button>
-      <button class="gametile" onclick="ltOpen()"><span class="gi">&#128739;</span><span class="gt">Lumen Trails</span><span class="gd">Retrace the glowing path</span></button>
-      <button class="gametile" onclick="spOpen()"><span class="gi">&#127912;</span><span class="gt">Spectra</span><span class="gd">Light-logic puzzle</span></button>
+      <button class="gametile" onclick="startGame()"><span class="gi"><svg viewBox="0 0 48 48" width="42" height="42"><rect x="6" y="6" width="15" height="15" rx="4.5" fill="#FB8C00"/><rect x="27" y="6" width="15" height="15" rx="4.5" fill="#8A6BFF"/><rect x="6" y="27" width="15" height="15" rx="4.5" fill="#2BB7A0"/><rect x="27" y="27" width="15" height="15" rx="4.5" fill="#FF6FA5"/></svg></span><span class="gt">Glowbloom Memory</span><span class="gd">Repeat the glowing sequence</span></button>
+      <button class="gametile" onclick="bsOpen()"><span class="gi"><svg viewBox="0 0 48 48" width="42" height="42"><path d="M27 4 11 27h10l-3 17 19-25H26z" fill="#FB8C00"/></svg></span><span class="gt">Bloomstorm</span><span class="gd">Tap blooms, dodge wilts</span></button>
+      <button class="gametile" onclick="ltOpen()"><span class="gi"><svg viewBox="0 0 48 48" width="42" height="42"><path d="M9 39c0-10 15-9 15-18S39 12 39 9" fill="none" stroke="#FB8C00" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="39" r="4" fill="#FF6FA5"/><circle cx="39" cy="9" r="4" fill="#2BB7A0"/></svg></span><span class="gt">Lumen Trails</span><span class="gd">Retrace the glowing path</span></button>
+      <button class="gametile" onclick="spOpen()"><span class="gi"><svg viewBox="0 0 48 48" width="42" height="42"><circle cx="19" cy="20" r="12" fill="#FB8C00" opacity=".9"/><circle cx="29" cy="20" r="12" fill="#8A6BFF" opacity=".75"/><circle cx="24" cy="30" r="12" fill="#2BB7A0" opacity=".7"/></svg></span><span class="gt">Spectra</span><span class="gd">Light-logic puzzle</span></button>
     </div>
   </div>
 
   <!-- 7d. BLOOMSTORM -->
   <div class="screen card" id="s-bstorm">
-    <div class="topbar"><button class="icon-btn" onclick="bsQuit()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t"><img class="brandlogo" src="glowbloom_logo.png" alt="glowbloom"/></span><span id="bsName" style="color:#9aa3c7;font-size:12px"></span></div>
+    <div class="topbar"><button class="icon-btn" onclick="bsQuit()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button><span class="t grad">Bloomstorm</span><span id="bsName" style="color:#9aa3c7;font-size:12px"></span></div>
     <div class="hud">
       <div class="pill"><div class="l">Time</div><div class="v" id="bsTime">45</div></div>
       <div class="pill"><div class="l">Score</div><div class="v" id="bsScore">0</div></div>
@@ -620,7 +634,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
 
   <!-- 7e. LUMEN TRAILS -->
   <div class="screen card" id="s-trails">
-    <div class="topbar"><button class="icon-btn" onclick="ltQuit()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t"><img class="brandlogo" src="glowbloom_logo.png" alt="glowbloom"/></span><span id="ltName" style="color:#9aa3c7;font-size:12px"></span></div>
+    <div class="topbar"><button class="icon-btn" onclick="ltQuit()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button><span class="t grad">Lumen Trails</span><span id="ltName" style="color:#9aa3c7;font-size:12px"></span></div>
     <div class="hud">
       <div class="pill"><div class="l">Level</div><div class="v" id="ltLevel">1</div></div>
       <div class="pill"><div class="l">Light</div><div class="v" id="ltScore">0</div></div>
@@ -635,7 +649,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
 
   <!-- 7f. SPECTRA -->
   <div class="screen card" id="s-spectra">
-    <div class="topbar"><button class="icon-btn" onclick="spQuit()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t"><img class="brandlogo" src="glowbloom_logo.png" alt="glowbloom"/></span><span id="spName" style="color:#9aa3c7;font-size:12px"></span></div>
+    <div class="topbar"><button class="icon-btn" onclick="spQuit()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button><span class="t grad">Spectra</span><span id="spName" style="color:#9aa3c7;font-size:12px"></span></div>
     <div class="hud">
       <div class="pill"><div class="l">Level</div><div class="v" id="spLevel">1</div></div>
       <div class="pill"><div class="l">Light</div><div class="v" id="spScore">0</div></div>
@@ -716,7 +730,9 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   setInterval(checkSession, 30000);
   document.addEventListener('visibilitychange', function(){ if(!document.hidden) checkSession(); });
   window.addEventListener('focus', checkSession);
-  async function loadStats(){var r=await api('/stats/me'); if(r.ok){statSummary=r.data; best.level=r.data.bestLevel||0; best.score=r.data.bestScore||0; best.runs=r.data.runs||0;} if(me&&me.glade){best.light=me.glade.totalLight||0;} refreshHome();}
+  var homeMode='JOURNEY';
+  async function loadStats(mode){ var mm=mode||homeMode||'JOURNEY'; var r=await api('/stats/me?mode='+mm); if(r.ok){statSummary=r.data; best.level=r.data.bestLevel||0; best.score=r.data.bestScore||0; best.runs=r.data.runs||0; best.light=r.data.totalLight||0;} refreshHome(); }
+  window.setHomeMode=function(m){ homeMode=m; document.querySelectorAll('#homeGames button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-m')===m); }); loadStats(m); };
   function toTitle(s){return (s||'').toLowerCase().replace(/\b\w/g,function(c){return c.toUpperCase();}).trim();}
   window.social=function(p){ account.name=toTitle(p+' user'); account.email=p.toLowerCase()+'@example.com'; id('who').textContent=account.name; enterApp(); };
   // ---- Real Google Sign-In (GIS) ----
@@ -937,7 +953,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   function flash(i,c,ms){els[i].classList.add(c);setTimeout(function(){els[i].classList.remove(c);},ms||450);}
   function showBtn(t){var b=id('btn');if(t){b.style.display='';b.textContent=t;}else{b.style.display='none';}}
   window.startGame=function(){ clearBoardTimer(); clearInputTimer(); finalizeGame(); level=1;score=0;rad=1;lives=GC.startBuds;phase='idle';boughtBuds=0;adBuds=0;needReset=false;logged=false; hud(); hideBuy(); id('status').textContent='Tap Start, watch the pattern, then tap it back.'; showBtn('Start'); if(id('gName'))id('gName').textContent=toTitle(account.name); show('s-game'); };
-  window.quitToHome=function(){ clearBoardTimer(); clearInputTimer(); stopCountdown(); finalizeGame(); refreshHome(); show('s-home'); };
+  window.quitToHome=function(){ clearBoardTimer(); clearInputTimer(); stopCountdown(); finalizeGame(); refreshHome(); show('s-games'); };
   window.onMainBtn=function(){ if(phase!=='idle')return; clearBoardTimer(); clearInputTimer(); hideBuy(); if(needReset){ finalizeGame(); level=1;score=0;rad=1;lives=GC.startBuds;boughtBuds=0;adBuds=0;needReset=false;logged=false; hud(); } newRound(); };
   function newRound(){
     stopCountdown(); input=[];seq=[];var len=GC.lenBase+Math.ceil(level/GC.lenStepLevels);

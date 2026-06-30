@@ -346,12 +346,16 @@ app.get("/scores/rank", requireAuth, async (req, res) => {
   res.json({ rank: mine, of: best.length });
 });
 app.get("/stats/me", requireAuth, async (req, res) => {
-  const agg = await prisma.score.aggregate({ where: { userId: req.userId }, _max: { light: true, level: true, maxRadiance: true }, _min: { light: true, level: true }, _avg: { light: true, level: true }, _count: true });
-  const recent = await prisma.score.findMany({ where: { userId: req.userId }, orderBy: { createdAt: "desc" }, take: 12, select: { light: true } });
+  const where = { userId: req.userId };
+  if (req.query.mode) where.mode = String(req.query.mode);
+  const agg = await prisma.score.aggregate({ where, _max: { light: true, level: true, maxRadiance: true }, _min: { light: true, level: true }, _avg: { light: true, level: true }, _sum: { light: true }, _count: true });
+  const recent = await prisma.score.findMany({ where, orderBy: { createdAt: "desc" }, take: 12, select: { light: true } });
   res.json({
+    mode: req.query.mode || "ALL",
     bestScore: agg._max.light || 0, bestLevel: agg._max.level || 0, bestRadiance: agg._max.maxRadiance || 1,
     minScore: agg._min.light || 0, minLevel: agg._min.level || 0,
     avgScore: Math.round(agg._avg.light || 0), avgLevel: Math.round((agg._avg.level || 0) * 10) / 10,
+    totalLight: agg._sum.light || 0,
     runs: agg._count, trend: recent.reverse().map((r) => r.light),
   });
 });

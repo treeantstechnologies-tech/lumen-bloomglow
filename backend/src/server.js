@@ -14,7 +14,7 @@ const prisma = getPrisma();
 const DEV_RETURN_CODES = String(process.env.DEV_RETURN_CODES) === "true" && process.env.NODE_ENV !== "production";
 const TERMS_VERSION = process.env.TERMS_VERSION || "1.0";
 
-app.use(cors({ origin: (process.env.CORS_ORIGIN || "*").split(",") }));
+app.use(cors({ origin: (process.env.CORS_ORIGIN || "*").split(","), exposedHeaders: ["X-Refresh-Token"] }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
@@ -381,8 +381,4 @@ app.post("/glade/sync", requireAuth, async (req, res) => {
   res.json({ glade });
 });
 
-const PORT = process.env.PORT || 4000;
-if (require.main === module) {
-  app.listen(PORT, () => console.log(`Glowbloom backend listening on :${PORT}`));
-}
-module.exports = app;
+const PORT = process.env.PORT 

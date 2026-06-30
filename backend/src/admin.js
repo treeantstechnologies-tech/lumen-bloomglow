@@ -139,4 +139,75 @@ router.get("/feedback", requireAdmin, async (req, res) => {
   }
 });
 
+// ---- Dashboard analytics (everything aggregated from our own DB) ----
+router.get("/dashboard", requireAdmin, async (req, res) => {
+  const num = (v) => (v == null ? 0 : Number(v));
+  try {
+    const since = (d) => new Date(Date.now() - d * 86400000);
+    const [users, verified, new1, new7, new30] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.count({ where: { emailVerified: true } }),
+      prisma.user.count({ where: { createdAt: { gte: since(1) } } }),
+      prisma.user.count({ where: { createdAt: { gte: since(7) } } }),
+      prisma.user.count({ where: { createdAt: { gte: since(30) } } }),
+    ]);
+
+    const activeRows = await prisma.$queryRaw`
+      SELECT
+        count(DISTINCT "userId") FILTER (WHERE "createdAt" > now() - interval '1 day')::int   AS d1,
+        count(DISTINCT "userId") FILTER (WHERE "createdAt" > now() - interval '7 days')::int   AS d7,
+        count(DISTINCT "userId") FILTER (WHERE "createdAt" > now() - interval '30 days')::int  AS d30
+      FROM "AuthLog" WHERE "userId" IS NOT NULL`;
+    const active = activeRows[0] || { d1: 0, d7: 0, d30: 0 };
+
+    const regSeries = await prisma.$queryRaw`
+      SELECT to_char(date_trunc('day',"createdAt"),'YYYY-MM-DD') d, count(*)::int c
+      FROM "User" WHERE "createdAt" > now() - interval '30 days' GROUP BY 1 ORDER BY 1`;
+    const loginSeries = await prisma.$queryRaw`
+      SELECT to_char(date_trunc('day',"createdAt"),'YYYY-MM-DD') d, count(*)::int c
+      FROM "AuthLog" WHERE "event"='LOGIN' AND "createdAt" > now() - interval '30 days' GROUP BY 1 ORDER BY 1`;
+    const gameSeries = await prisma.$queryRaw`
+      SELECT to_char(date_trunc('day',"createdAt"),'YYYY-MM-DD') d, count(*)::int c
+      FROM "Score" WHERE "createdAt" > now() - interval '30 days' GROUP BY 1 ORDER BY 1`;
+
+    const providers = await prisma.$queryRaw`
+      SELECT COALESCE("initialProvider"::text,'UNKNOWN') p, count(*)::int c FROM "User" GROUP BY 1 ORDER BY 2 DESC`;
+    const platforms = await prisma.$queryRaw`
+      SELECT COALESCE(NULLIF("platform",''),'unknown') p, count(*)::int c FROM "AuthLog" GROUP BY 1 ORDER BY 2 DESC`;
+
+    const sa = await prisma.score.aggregate({ _count: { _all: true }, _sum: { light: true }, _avg: { level: true, light: true }, _max: { level: true, light: true } });
+
+    let feedback = { count: 0, avg: 0, byCat: [] };
+    try {
+      const fa = await prisma.$queryRaw`SELECT count(*)::int c, COALESCE(avg("rating"),0)::float a FROM "Feedback"`;
+      const fc = await prisma.$queryRaw`SELECT COALESCE("category",'other') cat, count(*)::int c FROM "Feedback" GROUP BY 1 ORDER BY 2 DESC`;
+      feedback = { count: num(fa[0] && fa[0].c), avg: Math.round(num(fa[0] && fa[0].a) * 10) / 10, byCat: fc };
+    } catch (e) {}
+
+    let leaderboard = [];
+    try {
+      leaderboard = await prisma.$queryRaw`
+        SELECT COALESCE(u."displayName",'Player') name, max(s."light")::int light, max(s."level")::int level
+        FROM "Score" s JOIN "User" u ON u."id"=s."userId"
+        GROUP BY u."id", u."displayName" ORDER BY light DESC LIMIT 10`;
+    } catch (e) {}
+
+    res.json({
+      kpis: {
+        users, verified, new1, new7, new30,
+        active: { d1: num(active.d1), d7: num(active.d7), d30: num(active.d30) },
+        games: num(sa._count && sa._count._all), totalLight: num(sa._sum && sa._sum.light),
+        avgLevel: Math.round(num(sa._avg && sa._avg.level) * 10) / 10, avgScore: Math.round(num(sa._avg && sa._avg.light)),
+        maxLevel: num(sa._max && sa._max.level), maxScore: num(sa._max && sa._max.light),
+      },
+      series: { registrations: regSeries, logins: loginSeries, games: gameSeries },
+      providers, platforms, feedback, leaderboard,
+      external: { connected: false, note: "Revenue and store downloads require connecting AdMob, Google Play Console, and App Store Connect APIs." },
+    });
+  } catch (e) {
+    console.error("dashboard error:", e);
+    res.status(500).json({ error: "dashboard_failed", detail: String((e && e.message) || e) });
+  }
+});
+
 module.exports = router;

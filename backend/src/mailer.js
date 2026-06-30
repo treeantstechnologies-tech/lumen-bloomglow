@@ -45,13 +45,13 @@ function shell(innerHtml) {
     <tr><td align="center">
       <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#ffffff;border:1px solid #e7e9f3;border-radius:16px;overflow:hidden;">
         <tr><td bgcolor="#7C5BFF" align="center" style="background:#7C5BFF;background:linear-gradient(135deg,#7C5BFF,#9B6BFF);padding:24px 28px;">
-          <img src="${PUBLIC_BASE}/logo.png" width="46" height="46" alt="Glowbloom" style="display:block;margin:0 auto 8px;border:0;"/>
+          <img src="${PUBLIC_BASE}/treeants_icon.png" width="46" height="46" alt="TreeAnts" style="display:block;margin:0 auto 8px;border:0;"/>
           <div style="color:#ffffff;font-size:22px;font-weight:800;letter-spacing:.3px;">Glowbloom</div>
           <div style="color:#ece6ff;font-size:12px;margin-top:3px;font-style:italic;">Where memory blooms into light.</div>
         </td></tr>
         ${innerHtml}
         <tr><td align="center" style="padding:20px 28px 26px;border-top:1px solid #eef0f6;">
-          <img src="${PUBLIC_BASE}/treeants.png" height="18" alt="TreeAnts Technologies" style="display:block;margin:0 auto 6px;border:0;"/>
+          <img src="${PUBLIC_BASE}/treeants_dark.png" height="18" alt="TreeAnts Technologies" style="display:block;margin:0 auto 6px;border:0;"/>
           <div style="color:#9aa0b8;font-size:11px;">&copy; ${year} TreeAnts Technologies. All rights reserved.</div>
           <div style="color:#bfc4d6;font-size:11px;margin-top:4px;">This is an automated message — please do not reply.</div>
         </td></tr>

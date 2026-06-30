@@ -413,15 +413,15 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
 .bs-cell,.lt-cell,.sp-slot{box-shadow:inset 0 2px 8px rgba(255,255,255,.06),0 6px 14px rgba(0,0,0,.32);}
 </style>
 <style id="gb-gametop">
-.builtby-fixed{position:fixed;left:50%;bottom:6px;transform:translateX(-50%);z-index:40;display:none;align-items:center;gap:5px;font-size:9.5px;letter-spacing:.3px;color:#8a93b2;opacity:.9;pointer-events:none;}
-.builtby-fixed img{height:11px;opacity:.95;}
+.builtby-fixed{position:fixed;left:50%;bottom:6px;transform:translateX(-50%);z-index:40;display:flex;align-items:center;gap:5px;font-size:10.5px;letter-spacing:.3px;color:#9aa3c7;opacity:.92;pointer-events:none;}
+.builtby-fixed img{height:13px;opacity:.95;}
 body.gameplay .builtby-fixed{display:flex;}
 #bsName,#ltName,#spName{color:#fff!important;font-weight:600;}
 #s-bstorm .t.grad,#s-trails .t.grad,#s-spectra .t.grad{font-size:clamp(16px,2.6vh,20px);}
 </style>
 <style id="gb-homefix">
 #s-home.active{justify-content:center !important;}
-.footer{margin-top:clamp(6px,1.2vh,10px) !important;}
+.footer{display:none !important;}
 .footer .dev{font-size:11px;color:#8a93b2;}
 </style>
 </head>
@@ -886,7 +886,7 @@ body.gameplay .builtby-fixed{display:flex;}
     spRender(); spStatus('Tap a slot to change its colour. Satisfy every clue.');
   }
   function spRender(passed){
-    var sl=id('spSlots'); if(sl){ var h=''; for(var i=0;i<spN;i++){ var v=spArr[i]; var st=(v>=0)?(' filled" style="--sc:'+spPal[v].c+';background:'+spPal[v].c):''; h+='<div class="sp-slot'+st+'" onclick="spCycle('+i+')">'+(v<0?(i+1):'')+'<span class="si">'+(i+1)+'</span></div>'; } sl.innerHTML=h; }
+    var sl=id('spSlots'); if(sl){ var h=''; for(var i=0;i<spN;i++){ var v=spArr[i]; var st=(v>=0)?(' filled" style="--sc:'+spPal[v].c+';background:'+spPal[v].c):''; h+='<div class="sp-slot'+st+'" onclick="spCycle('+i+')">'+'<span class="si">'+(i+1)+'</span></div>'; } sl.innerHTML=h; }
     var cl=id('spClues'); if(cl){ cl.innerHTML=spClues.map(function(c,i){ var ok=(passed&&passed[i])?' ok':''; return '<div class="sp-clue'+ok+'">'+c.html+'</div>'; }).join(''); }
   }
   window.spCycle=function(i){ spArr[i]=(spArr[i]+1)%spN; if(spArr[i]>=0)play(spArr[i]%7,0.12); spRender(); };

@@ -311,6 +311,29 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
 <style id="gb-username">
 #who,#gName,#pfName{color:#ffffff !important;}
 </style>
+<style id="gb-bstorm">
+.gamelist{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+.gamecard{display:flex;align-items:center;gap:12px;text-align:left;padding:13px 14px;border-radius:14px;border:1px solid rgba(255,167,38,.22);background:linear-gradient(150deg,rgba(124,91,255,.16),rgba(255,167,38,.07));color:#fff;cursor:pointer;transition:transform .12s,filter .15s;width:100%;}
+.gamecard:hover{filter:brightness(1.08);} .gamecard:active{transform:scale(.98);}
+.gamecard .gi{font-size:26px;flex:0 0 auto;}
+.gamecard .gt{font-weight:700;font-family:'Fredoka','Poppins',sans-serif;display:block;}
+.gamecard .gd{font-size:12px;color:#9aa3c7;display:block;margin-top:1px;}
+.gamecard.off{opacity:.5;cursor:not-allowed;}
+.gamecard .soon{font-size:9px;background:rgba(255,180,71,.2);color:#FFC36B;padding:1px 6px;border-radius:8px;margin-left:6px;vertical-align:middle;font-weight:600;}
+#s-bstorm.active{overflow:hidden;justify-content:flex-start;}
+#bsBoard{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:min(94vw,calc(100svh - 320px));max-width:100%;aspect-ratio:1;margin:clamp(6px,1.4vh,12px) auto;perspective:620px;}
+.bs-cell{aspect-ratio:1;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:clamp(18px,4.5vh,32px);position:relative;transform-style:preserve-3d;transition:transform .15s,background .2s;cursor:pointer;user-select:none;}
+.bs-cell.bloom{background:radial-gradient(circle at 50% 38%,#9BE9AE,#2E9E4F);border-color:#fff;box-shadow:0 0 22px 5px rgba(67,192,106,.55),inset 0 0 14px rgba(255,255,255,.35);animation:bsPop .25s ease;}
+.bs-cell.wilt{background:radial-gradient(circle at 50% 38%,#FF9C9C,#D64545);border-color:#ffc2c2;box-shadow:0 0 18px 4px rgba(214,69,69,.5);animation:bsShakeIn .3s ease;}
+.bs-cell.hit{animation:bsHit .3s ease;}
+@keyframes bsPop{0%{transform:scale(.45) rotateX(55deg);opacity:.4;}100%{transform:scale(1) rotateX(0);opacity:1;}}
+@keyframes bsHit{0%{transform:scale(1.18) rotateX(-10deg);}100%{transform:scale(1) rotateX(0);}}
+@keyframes bsShakeIn{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+.bs-spark{position:absolute;width:8px;height:8px;border-radius:50%;background:#FFE08A;pointer-events:none;box-shadow:0 0 6px #FFD180;animation:bsSpark .5s ease forwards;}
+@keyframes bsSpark{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0;}}
+.bs-float{position:absolute;font-weight:800;color:#FFE08A;pointer-events:none;animation:bsFloat .7s ease forwards;font-size:14px;text-shadow:0 1px 3px rgba(0,0,0,.5);}
+@keyframes bsFloat{to{transform:translateY(-34px);opacity:0;}}
+</style>
 </head>
 
 <body>
@@ -406,7 +429,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
       <div class="stat"><div class="v" id="hsScore">0</div><div class="l">Best score</div></div>
     </div>
     <div class="muted" id="hsRange" style="margin-top:6px;font-size:11.5px;">Level 0-0 &middot; Score 0-0</div>
-    <button class="btn" onclick="startGame()"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:8px"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>Play · Journey</button>
+    <button class="btn" onclick="show('s-games')"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:8px"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>Play</button>
     <button class="btn alt" onclick="openLeaderboard()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>Leaderboards &amp; ranking</button>
     <button class="btn alt" onclick="openProfile()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Profile &amp; feedback</button>
     <button class="btn alt" onclick="openHowTo('s-home')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>How to play</button>
@@ -488,6 +511,32 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
     </div>
   </div>
 
+  <!-- 7c. GAMES HUB -->
+  <div class="screen card" id="s-games">
+    <div class="topbar"><button class="icon-btn" onclick="show('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t">Games</span><span style="width:34px;display:inline-block"></span></div>
+    <div class="gamelist">
+      <button class="gamecard" onclick="startGame()"><span class="gi">&#129504;</span><span><span class="gt">Glowbloom Memory</span><span class="gd">Repeat the glowing sequence</span></span></button>
+      <button class="gamecard" onclick="bsOpen()"><span class="gi">&#127785;</span><span><span class="gt">Bloomstorm</span><span class="gd">Tap blooms, dodge wilts &mdash; fast!</span></span></button>
+      <button class="gamecard off" disabled><span class="gi">&#128739;</span><span><span class="gt">Lumen Trails <span class="soon">soon</span></span><span class="gd">Memorise &amp; retrace the path</span></span></button>
+      <button class="gamecard off" disabled><span class="gi">&#127912;</span><span><span class="gt">Spectra <span class="soon">soon</span></span><span class="gd">Solve the light-logic puzzle</span></span></button>
+    </div>
+  </div>
+
+  <!-- 7d. BLOOMSTORM -->
+  <div class="screen card" id="s-bstorm">
+    <div class="topbar"><button class="icon-btn" onclick="bsQuit()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t"><img class="brandlogo" src="glowbloom_logo.png" alt="glowbloom"/></span><span id="bsName" style="color:#9aa3c7;font-size:12px"></span></div>
+    <div class="hud">
+      <div class="pill"><div class="l">Time</div><div class="v" id="bsTime">45</div></div>
+      <div class="pill"><div class="l">Score</div><div class="v" id="bsScore">0</div></div>
+      <div class="pill"><div class="l">Combo</div><div class="v" id="bsCombo" style="color:#FFC36B">x1</div></div>
+    </div>
+    <div id="bsBoard"></div>
+    <div class="controls">
+      <button class="btn sm" id="bsBtn" onclick="bsMain()">Start</button>
+      <div id="bsStatus">Tap the blooming flowers &mdash; avoid the red wilts!</div>
+    </div>
+  </div>
+
   <!-- 8. EXIT -->
   <div class="screen card" id="s-exit">
     <div class="center" style="font-size:20px;font-weight:700;">See you tomorrow</div>
@@ -512,7 +561,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   function hideSplash(){ var sp=id('splash'); if(sp){ sp.classList.add('hide'); setTimeout(function(){ if(sp){ sp.style.display='none'; } },560); } }
   function flashSplash(ms){ var sp=id('splash'); if(!sp)return; sp.style.display='flex'; void sp.offsetWidth; sp.classList.remove('hide'); setTimeout(hideSplash, ms||1000); }
   window.flashSplash=flashSplash;
-  function show(s){document.querySelectorAll('.screen').forEach(function(e){e.classList.remove('active');});id(s).classList.add('active');document.body.classList.toggle('playing', s==='s-game'||s==='s-home');window.scrollTo(0,0);try{if(typeof applyAvatar==='function')applyAvatar();}catch(e){}}
+  function show(s){document.querySelectorAll('.screen').forEach(function(e){e.classList.remove('active');});id(s).classList.add('active');document.body.classList.toggle('playing', s==='s-game'||s==='s-home'||s==='s-bstorm'||s==='s-games');window.scrollTo(0,0);try{if(typeof applyAvatar==='function')applyAvatar();}catch(e){}}
   // disable zoom (pinch, ctrl+wheel, ctrl +/-/0, gesture)
   document.addEventListener('wheel',function(e){ if(e.ctrlKey) e.preventDefault(); },{passive:false});
   document.addEventListener('keydown',function(e){ if((e.ctrlKey||e.metaKey)&&['+','-','=','0'].indexOf(e.key)>=0) e.preventDefault(); });
@@ -644,6 +693,21 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   window.onAvatarPick=function(ev){ var file=ev&&ev.target&&ev.target.files&&ev.target.files[0]; if(!file)return; if(!/^image\//.test(file.type)){ toast('Please choose an image file.'); return; } var reader=new FileReader(); reader.onload=function(e){ var img=new Image(); img.onload=function(){ try{ var S=256, c=document.createElement('canvas'); c.width=S; c.height=S; var ctx=c.getContext('2d'); var mn=Math.min(img.width,img.height), sx=(img.width-mn)/2, sy=(img.height-mn)/2; ctx.drawImage(img,sx,sy,mn,mn,0,0,S,S); uploadAvatar(c.toDataURL('image/jpeg',0.82)); }catch(err){ toast('Could not process that image.'); } }; img.onerror=function(){ toast('Could not read that image.'); }; img.src=e.target.result; }; reader.readAsDataURL(file); };
   async function uploadAvatar(dataUrl){ var p=id('pfAvatar'); if(p)p.src=dataUrl; if(me)me.avatarUrl=dataUrl; applyAvatar(); if(!TOKEN){ toast('Photo set for this session.'); return; } var r=await api('/me/avatar',{method:'POST',body:{dataUrl:dataUrl}}); if(r.ok){ toast('Profile photo updated!'); if(r.data&&r.data.user){ me=r.data.user; applyAvatar(); } } else { toast('Could not save photo to your account.'); } }
   window.submitFeedback=async function(){ var msg=(id('fbMsg').value||'').trim(); var cat=(id('fbCat').value)||'other'; if(!msg&&!fbRating){ toast('Add a rating or a message first.'); return; } var r=await api('/feedback',{method:'POST',body:Object.assign({category:cat,rating:fbRating,message:msg},deviceInfo())}); if(r.ok){ toast('Thanks for your feedback!'); id('fbMsg').value=''; setStars(0); } else { toast('Could not send feedback. Please try again.'); } };
+  // ===================== Bloomstorm (speed/focus game) =====================
+  var bsTimer=null,bsSpawn=null,bsScore=0,bsCombo=1,bsTimeLeft=45,bsActive=false,bsCells=[];
+  function bsBuild(){ var b=id('bsBoard'); if(!b)return; b.innerHTML=''; bsCells=[]; for(var i=0;i<16;i++){ var c=document.createElement('div'); c.className='bs-cell'; (function(idx){ c.addEventListener('click',function(){ bsTap(idx); }); })(i); b.appendChild(c); bsCells.push(c); } }
+  function bsClearTimers(){ if(bsTimer){clearInterval(bsTimer);bsTimer=null;} if(bsSpawn){clearTimeout(bsSpawn);bsSpawn=null;} }
+  function bsResetUI(){ bsScore=0;bsCombo=1;bsTimeLeft=45; if(id('bsTime'))id('bsTime').textContent=45; if(id('bsScore'))id('bsScore').textContent=0; if(id('bsCombo'))id('bsCombo').textContent='x1'; bsCells.forEach(function(c){c.className='bs-cell';c.textContent='';}); if(id('bsStatus'))id('bsStatus').textContent='Tap the blooming flowers — avoid the red wilts!'; var b=id('bsBtn'); if(b){b.style.display='';b.textContent='Start';} }
+  window.bsOpen=function(){ bsClearTimers(); bsActive=false; bsBuild(); bsResetUI(); if(id('bsName'))id('bsName').textContent=toTitle((account&&account.name)||''); show('s-bstorm'); };
+  window.bsMain=function(){ if(bsActive)return; bsClearTimers(); bsActive=true; bsScore=0;bsCombo=1;bsTimeLeft=45; if(id('bsScore'))id('bsScore').textContent=0; if(id('bsCombo'))id('bsCombo').textContent='x1'; if(id('bsTime'))id('bsTime').textContent=45; var b=id('bsBtn'); if(b)b.style.display='none'; if(id('bsStatus'))id('bsStatus').textContent='Go!'; bsTimer=setInterval(function(){ bsTimeLeft--; if(id('bsTime'))id('bsTime').textContent=Math.max(0,bsTimeLeft); if(bsTimeLeft<=0) bsEnd(); },1000); bsLoop(); };
+  function bsLoop(){ if(!bsActive)return; bsSpawnOne(); var iv=Math.max(420, 950-(45-bsTimeLeft)*12); bsSpawn=setTimeout(bsLoop, iv); }
+  function bsSpawnOne(){ var empt=[]; for(var i=0;i<16;i++){ if(bsCells[i].className==='bs-cell') empt.push(i); } if(!empt.length)return; var idx=empt[Math.floor(Math.random()*empt.length)], c=bsCells[idx]; var wilt=Math.random()<0.22; c.className='bs-cell '+(wilt?'wilt':'bloom'); c.textContent=wilt?'🥀':'🌸'; var life=Math.max(640,1300-(45-bsTimeLeft)*15); var tok={}; c._tok=tok; setTimeout(function(){ if(c._tok===tok && (c.classList.contains('bloom')||c.classList.contains('wilt'))){ if(c.classList.contains('bloom')){ bsCombo=1; if(id('bsCombo'))id('bsCombo').textContent='x1'; } c.className='bs-cell'; c.textContent=''; } }, life); }
+  function bsTap(idx){ if(!bsActive)return; var c=bsCells[idx]; if(c.classList.contains('bloom')){ bsCombo=Math.min(bsCombo+1,9); var gain=10*bsCombo; bsScore+=gain; if(id('bsScore'))id('bsScore').textContent=bsScore; if(id('bsCombo'))id('bsCombo').textContent='x'+bsCombo; c._tok={}; bsSpark(c); bsFloat(c,'+'+gain); c.className='bs-cell hit'; c.textContent=''; setTimeout(function(){ if(c.className==='bs-cell hit'){c.className='bs-cell';} },300); } else if(c.classList.contains('wilt')){ bsScore=Math.max(0,bsScore-15); bsCombo=1; if(id('bsScore'))id('bsScore').textContent=bsScore; if(id('bsCombo'))id('bsCombo').textContent='x1'; c._tok={}; c.className='bs-cell'; c.textContent=''; try{navigator.vibrate&&navigator.vibrate(60);}catch(e){} } }
+  function bsSpark(c){ for(var i=0;i<6;i++){ var s=document.createElement('div'); s.className='bs-spark'; var a=Math.random()*6.283; s.style.setProperty('--dx',(Math.cos(a)*30)+'px'); s.style.setProperty('--dy',(Math.sin(a)*30)+'px'); c.appendChild(s); (function(el){ setTimeout(function(){ if(el.parentNode)el.parentNode.removeChild(el); },520); })(s); } }
+  function bsFloat(c,t){ var f=document.createElement('div'); f.className='bs-float'; f.textContent=t; c.appendChild(f); setTimeout(function(){ if(f.parentNode)f.parentNode.removeChild(f); },720); }
+  function bsEnd(){ bsActive=false; bsClearTimers(); bsCells.forEach(function(c){c.className='bs-cell';c.textContent='';}); if(id('bsStatus'))id('bsStatus').textContent='Time! You scored '+bsScore+' light.'; var b=id('bsBtn'); if(b){b.style.display='';b.textContent='Play again';} if(TOKEN&&bsScore>0){ api('/scores',{method:'POST',body:Object.assign({mode:'BLOOMSTORM',light:bsScore,level:bsCombo,maxRadiance:1},deviceInfo())}); if(typeof loadStats==='function') loadStats(); } }
+  window.bsQuit=function(){ if(bsActive){ bsEnd(); } else { bsClearTimers(); } show('s-games'); };
+
   window.exitApp=function(){ id('exLight').textContent=session.light; id('exLevel').textContent=best.level; stopCountdown(); show('s-exit'); };
   window.reopen=function(){ session.light=0; refreshHome(); show('s-home'); };
   window.logout=async function(){ stopCountdown(); try{await api('/auth/logout',{method:'POST',body:deviceInfo()});}catch(e){} setToken(null); me=null; account={email:'',mobile:'',minor:false,name:'player'}; best.level=0;best.score=0;best.light=0;best.runs=0; if(id('agree'))id('agree').checked=false; show('s-login'); };

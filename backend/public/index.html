@@ -438,6 +438,11 @@ body.gameplay .builtby-fixed{display:none;}
 #s-games .gamegrid{grid-template-rows:1fr 1fr !important;flex:1 1 auto !important;min-height:0 !important;max-height:400px !important;margin:auto 0 !important;}
 #s-games .gametile{justify-content:center !important;min-height:0 !important;}
 </style>
+<style id="gb-howtoscroll">
+#s-onb.active{overflow:hidden !important;}
+#s-onb .howtogames{flex:0 0 auto;}
+#howtoBody{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+</style>
 </head>
 
 <body>
@@ -816,10 +821,10 @@ body.gameplay .builtby-fixed{display:none;}
   window.enterApp=function(){ refreshHome(); show('s-home'); };
   var onbFrom='s-login';
   var HOWTO={
-    mem:[['👀','Watch the glowbuds light up, then <b>tap them back in the same order</b>.'],['⏱️','You get <b style="color:#FFB74D">at least 10 seconds</b> to tap the pattern.'],['🥀','A wrong tap or timeout costs <b>1 Bud</b> (start with <b>4</b>). <b>Buy a Bud</b> with Light.'],['🔆','<b style="color:#FFC36B">Radiance</b> multiplies your Light for mistake-free streaks (up to <b>x3</b>).'],['🎵','Pick <b>Sargam</b>, Beeps, or Mute for tap sounds.']],
-    storm:[['🌸','Tap the <b>blooming flowers</b> — each adds to your <b style="color:#FFC36B">combo</b>.'],['🥀',"Don't tap the <b>red wilts</b> — they cost points and reset your combo."],['⏱️','<b>45-second</b> rounds that speed up. Chain taps to grow the multiplier.'],['🏆','Scores save to the Bloomstorm <b>leaderboard</b>.']],
-    trails:[['🛤️','A <b>glowing trail</b> flashes across the grid — memorise it.'],['✋','<b>Retrace</b> the trail in the same order from memory.'],['🥀','A wrong tile costs a <b>Bud</b> (start with <b>3</b>).'],['✨','Longer trails earn more <b style="color:#7BE0C0">Light</b>; each level grows.']],
-    spectra:[['🎨','Arrange the <b>coloured orbs</b> so <b>every clue</b> is satisfied.'],['🔁','Tap a slot to change its colour; <b>use each colour once</b>.'],['🧩','Clues: in a slot, immediately left of, somewhere left of, not in a slot.'],['🌟','Solve to earn <b style="color:#7BE0C0">Light</b>. Puzzles grow from <b>4 to 6</b> slots.']]
+    mem:[['👀','Watch the glowbuds light up, then <b>tap them back in the same order</b>.'],['⏱️','On your turn you have <b style="color:#FFB74D">at least 10 seconds</b> to finish the pattern.'],['🥀','A wrong tap or running out of time costs <b>1 Bud</b>. You start with <b>4 Buds</b>.'],['✨','Clearing a pattern earns <b style="color:#7BE0C0">Light</b> (your points). Longer patterns are worth more Light.'],['🔆','<b style="color:#FFC36B">Radiance</b> is your streak multiplier — each mistake-free pattern raises it (up to <b>x3</b>) and multiplies your Light; a wrong tap or lost Bud resets it to <b>x1</b>.'],['🌷','Out of Buds? <b>Buy a Bud</b> with Light (level × 10), up to <b>2 per run</b>.'],['🎵','Pick <b>Sargam</b> (Sa Re Ga…), Beeps, or Mute for tap sounds.'],['🏆','Climb the <b>Leaderboard</b> — players tied on level &amp; Light share a rank.']],
+    storm:[['🌸','Flowers <b>bloom</b> across the grid — tap them fast to score; each tap grows your <b style="color:#FFC36B">combo</b>.'],['🥀','<b>Red wilts</b> are traps — tapping one costs points and resets your combo to x1.'],['⏱️','Each round is <b>45 seconds</b> and speeds up over time, so blooms appear and vanish quicker.'],['⚡','Chain blooms without hitting a wilt to keep the combo high — that is where the big Light comes from.'],['🏆','Your best score is saved to the <b>Bloomstorm leaderboard</b>.']],
+    trails:[['🛤️','A <b>glowing trail</b> lights up tile by tile — watch and <b>memorise the order</b>.'],['✋','When it hides, <b>retrace the trail</b> by tapping the tiles in the same sequence.'],['🥀','A wrong tile costs a <b>Bud</b> (you start with <b>3</b>); the trail replays so you can try again.'],['✨','Finish a trail to earn <b style="color:#7BE0C0">Light</b>. Each level adds a longer trail for more points.'],['🏆','Reach as high a level as you can before your Buds run out.']],
+    spectra:[['🎨','Each puzzle has coloured <b>light orbs</b> and a set of <b>clues</b> — arrange the orbs so every clue is true.'],['🔁','<b>Tap a slot</b> to cycle its colour. Use <b>each colour exactly once</b>.'],['🧩','Clues: a colour <b>in a slot</b>, <b>immediately left of</b> another, <b>somewhere left of</b> another, or <b>not in</b> a slot.'],['✅','Hit <b>Check</b> — solved clues turn green. Solve them all to earn <b style="color:#7BE0C0">Light</b>.'],['🌟','Puzzles grow from <b>4 to 6</b> slots as you level up.']]
   };
   window.howtoSel=function(g){ var rows=HOWTO[g]||HOWTO.mem; var bd=id('howtoBody'); if(bd){ bd.innerHTML=rows.map(function(x){return '<div class="hrow"><span class="hicon">'+x[0]+'</span><span>'+x[1]+'</span></div>';}).join(''); } document.querySelectorAll('#howtoGames button').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-g')===g); }); };
   window.openHowTo=function(from){ onbFrom=from||'s-login'; var b=id('onbBtn'); if(b){ if(TOKEN){ b.textContent='Start playing'; b.onclick=function(){ enterApp(); }; } else { b.textContent='Got it'; b.onclick=function(){ show(onbFrom); }; } } howtoSel('mem'); show('s-onb'); };

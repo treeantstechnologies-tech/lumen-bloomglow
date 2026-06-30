@@ -387,6 +387,20 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
 #s-games .gametile.off{opacity:.62;cursor:not-allowed;background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border-color:rgba(255,255,255,.10);}
 #s-games .gametile .soon{margin-top:2px;font-size:9.5px;font-weight:700;background:rgba(255,180,71,.2);color:#FFC36B;padding:2px 9px;border-radius:9px;letter-spacing:.3px;text-transform:uppercase;}
 </style>
+<style id="gb-spectra">
+#s-spectra.active{overflow:hidden;justify-content:flex-start;}
+.sp-slots{display:flex;gap:10px;justify-content:center;margin:clamp(12px,2.6vh,26px) auto clamp(14px,2vh,20px);}
+.sp-slot{width:clamp(44px,11.5vw,62px);height:clamp(44px,11.5vw,62px);border-radius:50%;border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:rgba(255,255,255,.55);cursor:pointer;transition:transform .12s,box-shadow .2s,background .2s;position:relative;}
+.sp-slot:active{transform:scale(.93);}
+.sp-slot.filled{border-color:#fff;color:transparent;box-shadow:0 0 16px 3px var(--sc),inset 0 0 12px rgba(255,255,255,.3);}
+.sp-slot .si{position:absolute;bottom:-17px;left:0;right:0;text-align:center;font-size:11px;color:#8a93b2;}
+.sp-clues{display:flex;flex-direction:column;gap:6px;max-width:340px;width:100%;margin:6px auto 0;}
+.sp-clue{display:flex;align-items:center;gap:7px;font-size:12.5px;color:#d3d9f2;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:7px 10px;line-height:1.3;}
+.sp-clue.ok{border-color:rgba(67,192,106,.5);background:rgba(67,192,106,.10);}
+.sp-dot{width:15px;height:15px;border-radius:50%;display:inline-block;vertical-align:middle;box-shadow:0 0 5px rgba(0,0,0,.35);flex:0 0 auto;}
+.sp-slots.shake{animation:bsShakeIn .35s ease;}
+.sp-slot.win{animation:bsHit .4s ease;}
+</style>
 </head>
 
 <body>
@@ -572,7 +586,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
       <button class="gametile" onclick="startGame()"><span class="gi">&#129504;</span><span class="gt">Glowbloom Memory</span><span class="gd">Repeat the glowing sequence</span></button>
       <button class="gametile" onclick="bsOpen()"><span class="gi">&#127785;</span><span class="gt">Bloomstorm</span><span class="gd">Tap blooms, dodge wilts</span></button>
       <button class="gametile" onclick="ltOpen()"><span class="gi">&#128739;</span><span class="gt">Lumen Trails</span><span class="gd">Retrace the glowing path</span></button>
-      <button class="gametile off" disabled><span class="gi">&#127912;</span><span class="gt">Spectra</span><span class="gd">Light-logic puzzle</span><span class="soon">Coming soon</span></button>
+      <button class="gametile" onclick="spOpen()"><span class="gi">&#127912;</span><span class="gt">Spectra</span><span class="gd">Light-logic puzzle</span></button>
     </div>
   </div>
 
@@ -606,6 +620,23 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
     </div>
   </div>
 
+  <!-- 7f. SPECTRA -->
+  <div class="screen card" id="s-spectra">
+    <div class="topbar"><button class="icon-btn" onclick="spQuit()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><title>Back</title><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></button><span class="t"><img class="brandlogo" src="glowbloom_logo.png" alt="glowbloom"/></span><span id="spName" style="color:#9aa3c7;font-size:12px"></span></div>
+    <div class="hud">
+      <div class="pill"><div class="l">Level</div><div class="v" id="spLevel">1</div></div>
+      <div class="pill"><div class="l">Light</div><div class="v" id="spScore">0</div></div>
+      <div class="pill"><div class="l">Slots</div><div class="v" id="spSlotsN">4</div></div>
+    </div>
+    <div id="spSlots" class="sp-slots"></div>
+    <div class="sp-clues" id="spClues"></div>
+    <div class="controls">
+      <button class="btn sm" id="spBtn" onclick="spCheck()">Check</button>
+      <button class="btn sm alt" onclick="spSkip()">New puzzle</button>
+      <div id="spStatus">Tap a slot to change its colour. Satisfy every clue.</div>
+    </div>
+  </div>
+
   <!-- 8. EXIT -->
   <div class="screen card" id="s-exit">
     <div class="center" style="font-size:20px;font-weight:700;">See you tomorrow</div>
@@ -630,7 +661,7 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   function hideSplash(){ var sp=id('splash'); if(sp){ sp.classList.add('hide'); setTimeout(function(){ if(sp){ sp.style.display='none'; } },560); } }
   function flashSplash(ms){ var sp=id('splash'); if(!sp)return; sp.style.display='flex'; void sp.offsetWidth; sp.classList.remove('hide'); setTimeout(hideSplash, ms||1000); }
   window.flashSplash=flashSplash;
-  function show(s){document.querySelectorAll('.screen').forEach(function(e){e.classList.remove('active');});id(s).classList.add('active');document.body.classList.toggle('playing', s==='s-game'||s==='s-home'||s==='s-bstorm'||s==='s-games'||s==='s-trails');window.scrollTo(0,0);try{if(typeof applyAvatar==='function')applyAvatar();}catch(e){}}
+  function show(s){document.querySelectorAll('.screen').forEach(function(e){e.classList.remove('active');});id(s).classList.add('active');document.body.classList.toggle('playing', s==='s-game'||s==='s-home'||s==='s-bstorm'||s==='s-games'||s==='s-trails'||s==='s-spectra');window.scrollTo(0,0);try{if(typeof applyAvatar==='function')applyAvatar();}catch(e){}}
   // disable zoom (pinch, ctrl+wheel, ctrl +/-/0, gesture)
   document.addEventListener('wheel',function(e){ if(e.ctrlKey) e.preventDefault(); },{passive:false});
   document.addEventListener('keydown',function(e){ if((e.ctrlKey||e.metaKey)&&['+','-','=','0'].indexOf(e.key)>=0) e.preventDefault(); });
@@ -790,6 +821,46 @@ body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset
   function ltSpark(c){ for(var i=0;i<5;i++){ var s=document.createElement('div'); s.className='bs-spark'; var a=Math.random()*6.283; s.style.setProperty('--dx',(Math.cos(a)*26)+'px'); s.style.setProperty('--dy',(Math.sin(a)*26)+'px'); c.appendChild(s); (function(el){ setTimeout(function(){ if(el.parentNode)el.parentNode.removeChild(el); },520); })(s); } }
   function ltEnd(){ ltPhase='idle'; ltLock=false; id('ltStatus').textContent='Out of Buds! You reached level '+ltLevel+'.'; var b=id('ltBtn'); if(b){b.style.display='';b.textContent='Play again';} if(TOKEN&&ltScore>0){ api('/scores',{method:'POST',body:Object.assign({mode:'TRAILS',light:ltScore,level:ltLevel,maxRadiance:1},deviceInfo())}); if(typeof loadStats==='function')loadStats(); } var keep=ltScore; ltScore=0;ltLevel=1;ltLives=3; setTimeout(function(){ id('ltLevel').textContent=1; id('ltScore').textContent=0; id('ltLives').textContent=3; },60); return keep; }
   window.ltQuit=function(){ if(ltPhase!=='idle'){ ltEnd(); } else { ltClearCells(); } show('s-games'); };
+
+  // ===================== Spectra (logic / deduction game) =====================
+  var spPal=[{n:'Amber',c:'#FB8C00'},{n:'Violet',c:'#8A6BFF'},{n:'Teal',c:'#2BB7A0'},{n:'Rose',c:'#FF6FA5'},{n:'Sky',c:'#3D8BFF'},{n:'Lime',c:'#8BC34A'}];
+  var spN=4,spArr=[],spSol=[],spClues=[],spLevel=1,spScore=0;
+  function spRand(k){ return Math.floor(Math.random()*k); }
+  function spDot(c){ return '<span class="sp-dot" style="background:'+spPal[c].c+'"></span>'; }
+  function spStatus(t){ if(id('spStatus'))id('spStatus').textContent=t; }
+  function spShuffle(a){ for(var i=a.length-1;i>0;i--){ var j=spRand(i+1),t=a[i];a[i]=a[j];a[j]=t; } return a; }
+  function spNew(){
+    spN=Math.min(4+Math.floor((spLevel-1)/3),6);
+    if(id('spSlotsN'))id('spSlotsN').textContent=spN;
+    var base=[]; for(var i=0;i<spN;i++)base.push(i); spSol=spShuffle(base.slice());
+    spArr=[]; for(var k=0;k<spN;k++)spArr.push(-1);
+    spClues=[];
+    var ps=spRand(spN); spClues.push({html:spDot(spSol[ps])+' is in slot '+(ps+1),test:(function(c,s){return function(a){return a[s]===c;};})(spSol[ps],ps)});
+    var ii=spRand(spN-1); spClues.push({html:spDot(spSol[ii])+' is immediately left of '+spDot(spSol[ii+1]),test:(function(x,y){return function(a){var i=a.indexOf(x);return i>=0&&a[i+1]===y;};})(spSol[ii],spSol[ii+1])});
+    var ri=spRand(spN),rj=spRand(spN); while(rj===ri)rj=spRand(spN); var lo=Math.min(ri,rj),hi=Math.max(ri,rj);
+    spClues.push({html:spDot(spSol[lo])+' is somewhere left of '+spDot(spSol[hi]),test:(function(x,y){return function(a){var i=a.indexOf(x),j=a.indexOf(y);return i>=0&&j>=0&&i<j;};})(spSol[lo],spSol[hi])});
+    if(spN>=5){ var ns=spRand(spN),nc=spRand(spN); while(nc===spSol[ns])nc=spRand(spN); spClues.push({html:spDot(nc)+' is NOT in slot '+(ns+1),test:(function(c,s){return function(a){return a[s]!==c;};})(nc,ns)}); }
+    spRender(); spStatus('Tap a slot to change its colour. Satisfy every clue.');
+  }
+  function spRender(passed){
+    var sl=id('spSlots'); if(sl){ var h=''; for(var i=0;i<spN;i++){ var v=spArr[i]; var st=(v>=0)?(' filled" style="--sc:'+spPal[v].c+';background:'+spPal[v].c):''; h+='<div class="sp-slot'+st+'" onclick="spCycle('+i+')">'+(v<0?(i+1):'')+'<span class="si">'+(i+1)+'</span></div>'; } sl.innerHTML=h; }
+    var cl=id('spClues'); if(cl){ cl.innerHTML=spClues.map(function(c,i){ var ok=(passed&&passed[i])?' ok':''; return '<div class="sp-clue'+ok+'">'+c.html+'</div>'; }).join(''); }
+  }
+  window.spCycle=function(i){ spArr[i]=(spArr[i]+1)%spN; spRender(); };
+  window.spCheck=function(){
+    var filled=spArr.every(function(x){return x>=0;});
+    if(!filled){ spStatus('Fill every slot first.'); return; }
+    var perm=(new Set(spArr)).size===spN;
+    if(!perm){ spStatus('Use each colour exactly once.'); spJolt(); return; }
+    var passed=spClues.map(function(c){return c.test(spArr);});
+    spRender(passed);
+    if(passed.every(Boolean)){ var gain=spLevel*25; spScore+=gain; if(id('spScore'))id('spScore').textContent=spScore; spStatus('Solved! +'+gain+' light.'); var sl=id('spSlots'); if(sl)Array.prototype.forEach.call(sl.children,function(e){e.classList.add('win');}); setTimeout(function(){ spLevel++; if(id('spLevel'))id('spLevel').textContent=spLevel; spNew(); }, 950); }
+    else { var ok=passed.filter(Boolean).length; spStatus(ok+' of '+spClues.length+' clues satisfied — keep deducing.'); spJolt(); }
+  };
+  function spJolt(){ var sl=id('spSlots'); if(!sl)return; sl.classList.remove('shake'); void sl.offsetWidth; sl.classList.add('shake'); }
+  window.spSkip=function(){ spNew(); };
+  window.spOpen=function(){ spLevel=1;spScore=0; if(id('spLevel'))id('spLevel').textContent=1; if(id('spScore'))id('spScore').textContent=0; if(id('spName'))id('spName').textContent=toTitle((account&&account.name)||''); spNew(); show('s-spectra'); };
+  window.spQuit=function(){ if(TOKEN&&spScore>0){ api('/scores',{method:'POST',body:Object.assign({mode:'SPECTRA',light:spScore,level:spLevel,maxRadiance:1},deviceInfo())}); if(typeof loadStats==='function')loadStats(); } spScore=0;spLevel=1; show('s-games'); };
 
   window.exitApp=function(){ id('exLight').textContent=session.light; id('exLevel').textContent=best.level; stopCountdown(); show('s-exit'); };
   window.reopen=function(){ session.light=0; refreshHome(); show('s-home'); };

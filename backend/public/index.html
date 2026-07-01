@@ -887,7 +887,7 @@ body.gameplay .builtby-fixed{display:none;}
     if(!_fn||!_ln){toast(M('name_required'));return;}
     var _yr=(id('byear').value||'').trim(),y=parseInt(_yr,10),_cy=new Date().getFullYear();
     if(!_yr||isNaN(y)||y<1900||y>_cy){toast(M('byear_required'));return;}
-    account.firstName=toTitle(_fn);account.lastName=toTitle(_ln);account.byear=y;account.minor=(_cy-y)<18;
+    account.firstName=toTitle(_fn);account.lastName=toTitle(_ln);account.byear=y;account.minor=(_cy-y)<18; try{window.GB_MINOR=account.minor;}catch(e){}
     account.name=toTitle((_fn+' '+_ln).trim()); id('who').textContent=account.name;
     id('otpTo').textContent='Code sent to '+account.email+(account.mobile?(' and '+account.mobile):'');
     id('demoRow').style.display='none'; id('otp').value=''; id('kidsNote').style.display=account.minor?'block':'none';
@@ -1221,5 +1221,23 @@ body.gameplay .builtby-fixed{display:none;}
 })();
 </script>
 <!-- ================= /Glowbloom Engagement Layer ================= -->
+
+<!-- ================= Ad bridge (web -> native shell) ================= -->
+<script id="gb-ads-bridge">
+(function(){
+  function nat(o){try{if(window.GBNative&&window.GBNative.postMessage){window.GBNative.postMessage(JSON.stringify(o));}}catch(e){}}
+  function isMinor(){if(window.GB_MINOR===true)return true;try{var k=document.getElementById('kidsNote');if(k&&k.style&&k.style.display==='block')return true;}catch(e){}return false;}
+  function reportAds(){nat({action:'adsConfig',minor:isMinor()});}
+  var _play=null;
+  function syncBanner(){var p=document.body.classList.contains('gameplay');if(p!==_play){_play=p;nat({action:'banner',show:!p});}}
+  var _show=window.show;
+  window.show=function(n){var r=_show?_show.apply(this,arguments):undefined;try{setTimeout(function(){syncBanner();if(n==='s-home')reportAds();},0);}catch(e){}return r;};
+  var _fetch=window.fetch;
+  window.fetch=function(input,init){try{var url=(typeof input==='string')?input:(input&&input.url)||'';var m=((init&&init.method)||'GET').toUpperCase();if(m==='POST'&&/\/scores(\?|$)/.test(url)&&!isMinor()){setTimeout(function(){nat({action:'interstitial'});},1200);}}catch(e){}return _fetch.apply(this,arguments);};
+  try{setTimeout(reportAds,1500);}catch(e){}
+  window.addEventListener('gb-native-ready',function(){try{setTimeout(reportAds,300);syncBanner();}catch(e){}});
+})();
+</script>
+<!-- ================= /Ad bridge ================= -->
 </body>
 </html>

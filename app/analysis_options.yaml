@@ -1,5 +1,12 @@
 include: package:flutter_lints/flutter.yaml
 
+# _lean_backup/ is an old, unused prototype (not imported by lib/). Exclude it
+# so its stale imports don't fail analysis or builds.
+analyzer:
+  exclude:
+    - "_lean_backup/**"
+    - "build/**"
+
 linter:
   rules:
     prefer_const_constructors: true

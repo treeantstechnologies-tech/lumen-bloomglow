@@ -1127,5 +1127,99 @@ body.gameplay .builtby-fixed{display:none;}
   hud(); refreshHome();
 })();
 </script>
+
+<!-- ================= Glowbloom Engagement Layer (additive; hooks fetch+show; no layout changes) ================= -->
+<style id="gb-engage-css">
+  /* button & tile juice */
+  .btn{transition:transform .12s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,filter .18s;}
+  .btn:active{transform:scale(.955);}
+  .btn:not(.alt):hover{filter:brightness(1.06);}
+  .homegames button,.lbgames button{transition:transform .12s cubic-bezier(.34,1.56,.64,1),background .18s;}
+  .homegames button:active,.lbgames button:active{transform:scale(.92);}
+  #board .cell,.cell,.tile,.pad,.bs-cell,.lt-cell{transition:transform .08s ease,filter .12s ease;}
+  #board .cell:active,.cell:active,.tile:active,.pad:active{transform:scale(.9);}
+  /* gentle attention pulse on the primary Play button only */
+  @keyframes gbPlayPulse{0%,100%{box-shadow:0 8px 22px rgba(124,91,255,.35);}50%{box-shadow:0 12px 32px rgba(124,91,255,.62);}}
+  #s-home>.btn:not(.alt){animation:gbPlayPulse 2.6s ease-in-out infinite;}
+  /* streak/level badge — lives in the EXISTING empty #s-home topbar .t span, so it adds no vertical height */
+  #s-home .topbar .t .gb-badge{display:inline-flex;align-items:center;gap:6px;font-family:'Fredoka','Poppins',sans-serif;font-weight:700;font-size:12.5px;line-height:1;color:#fff;cursor:pointer;user-select:none;padding:4px 10px;border-radius:999px;background:linear-gradient(135deg,rgba(124,91,255,.32),rgba(255,167,38,.20));border:1px solid rgba(255,255,255,.16);box-shadow:0 3px 10px rgba(0,0,0,.25);white-space:nowrap;}
+  .gb-badge .fire{filter:drop-shadow(0 0 4px rgba(255,140,60,.85));}
+  .gb-badge .dot{opacity:.45;}
+  .gb-badge .xpbar{position:relative;width:32px;height:5px;border-radius:3px;background:rgba(255,255,255,.20);overflow:hidden;}
+  .gb-badge .xpbar>i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:linear-gradient(90deg,#7BE0C0,#8FD0FF);transition:width .55s cubic-bezier(.22,1,.36,1);}
+  .gb-badge:active{transform:scale(.94);}
+  /* fixed FX overlay — zero layout impact */
+  #gb-fx{position:fixed;inset:0;pointer-events:none;z-index:99999;overflow:hidden;}
+  .gb-piece{position:absolute;top:-16px;width:10px;height:14px;border-radius:2px;opacity:.96;will-change:transform;}
+  @keyframes gbFall{0%{transform:translateY(-12vh) rotate(0)}100%{transform:translateY(114vh) rotate(720deg)}}
+  .gb-banner{position:fixed;left:50%;top:30%;transform:translate(-50%,-50%) scale(.6);opacity:0;z-index:100000;pointer-events:none;text-align:center;padding:16px 26px;border-radius:20px;background:linear-gradient(160deg,rgba(32,24,64,.96),rgba(18,14,36,.97));border:1px solid rgba(255,255,255,.14);box-shadow:0 18px 50px rgba(0,0,0,.5),inset 0 0 0 1px rgba(124,91,255,.22);font-family:'Fredoka','Poppins',sans-serif;transition:transform .42s cubic-bezier(.34,1.56,.64,1),opacity .3s;max-width:82vw;}
+  .gb-banner.show{transform:translate(-50%,-50%) scale(1);opacity:1;}
+  .gb-banner.out{transform:translate(-50%,-50%) scale(.86) translateY(-14px);opacity:0;}
+  .gb-banner .gb-em{font-size:40px;line-height:1;margin-bottom:6px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.45));}
+  .gb-banner .gb-tt{font-size:20px;font-weight:800;color:#fff;letter-spacing:.3px;}
+  .gb-banner .gb-sub{font-size:13px;color:#cfd2f2;margin-top:4px;}
+</style>
+<script id="gb-engage-js">
+(function(){
+  'use strict';
+  function g(k,d){try{var v=localStorage.getItem(k);return v==null?d:v;}catch(e){return d;}}
+  function s(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+  function jget(k,d){try{var v=JSON.parse(g(k,'null'));return v==null?d:v;}catch(e){return d;}}
+  function jset(k,v){s(k,JSON.stringify(v));}
+  function num(k){return (+g(k,'0'))||0;}
+  function today(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+  function isYesterday(prev,td){if(!prev)return false;var p=prev.split('-'),c=td.split('-');var a=new Date(+p[0],+p[1]-1,+p[2]),b=new Date(+c[0],+c[1]-1,+c[2]);return Math.round((b-a)/86400000)===1;}
+  function prettyMode(m){return ({JOURNEY:'Memory',BLOOMSTORM:'Bloomstorm',TRAILS:'Trails',SPECTRA:'Spectra',CHIMNI:'Chimni'})[m]||'Game';}
+  function levelFromXp(xp){var lvl=1,need=120;while(xp>=need){xp-=need;lvl++;need=Math.round(need*1.35);}return {level:lvl,into:Math.round(xp),need:need};}
+  function buzz(pat){try{if(navigator.vibrate)navigator.vibrate(pat);}catch(e){}}
+  function toastSafe(m){try{if(window.toast)window.toast(m);}catch(e){}}
+
+  var fx=document.getElementById('gb-fx');
+  if(!fx){fx=document.createElement('div');fx.id='gb-fx';document.body.appendChild(fx);}
+  var COLORS=['#FFC36B','#7C5BFF','#7BE0C0','#FF9DBB','#8FD0FF','#FFD180','#B7A6FF'];
+  function confetti(n){n=n||70;for(var i=0;i<n;i++){(function(){var p=document.createElement('div');p.className='gb-piece';p.style.background=COLORS[(Math.random()*COLORS.length)|0];p.style.left=(Math.random()*100)+'vw';var dur=(1.6+Math.random()*1.7);p.style.animation='gbFall '+dur+'s linear forwards';p.style.animationDelay=(Math.random()*0.35)+'s';if(Math.random()<.5)p.style.borderRadius='50%';p.style.width=(6+Math.random()*7)+'px';p.style.height=(8+Math.random()*9)+'px';fx.appendChild(p);setTimeout(function(){if(p.parentNode)p.parentNode.removeChild(p);},(dur+0.6)*1000);})();}}
+  function banner(title,sub,emoji){var b=document.createElement('div');b.className='gb-banner';b.innerHTML='<div class="gb-em">'+(emoji||'✨')+'</div><div class="gb-tt"></div>'+(sub?'<div class="gb-sub"></div>':'');b.querySelector('.gb-tt').textContent=title;if(sub)b.querySelector('.gb-sub').textContent=sub;fx.appendChild(b);requestAnimationFrame(function(){b.classList.add('show');});setTimeout(function(){b.classList.add('out');setTimeout(function(){if(b.parentNode)b.parentNode.removeChild(b);},450);},1750);}
+
+  var ACH={first:{t:'First Bloom',e:'🌱'},s3:{t:'3-Day Streak',e:'🔥'},s7:{t:'Week Warrior',e:'🔥'},s30:{t:'Unstoppable — 30 days',e:'💎'},all5:{t:'Explorer — all 5 games',e:'🎮'},k1:{t:'1,000 Light',e:'⭐'},k5:{t:'5,000 Light',e:'🌟'},k25:{t:'25,000 Light',e:'☀️'},lv5:{t:'Reached Level 5',e:'🏅'},lv10:{t:'Reached Level 10',e:'👑'}};
+  function unlock(id){var u=jget('gb_ach',{});if(u[id])return;u[id]=today();jset('gb_ach',u);var a=ACH[id];if(a){setTimeout(function(){banner('Achievement unlocked!',a.e+'  '+a.t,'🏆');confetti(45);buzz([0,30,40,30]);},350);}}
+
+  function onGame(mode,light,level){
+    light=Math.max(0,(+light)||0);
+    var td=today(),last=g('gb_lastplay','');
+    if(last!==td){var st=isYesterday(last,td)?(num('gb_streak')+1):1;s('gb_streak',String(st));s('gb_lastplay',td);
+      if(st>=2){setTimeout(function(){banner(st+'-day streak!','Keep it glowing','🔥');confetti(40);buzz(30);},220);}
+      if(st>=3)unlock('s3');if(st>=7)unlock('s7');if(st>=30)unlock('s30');}
+    var tot=num('gb_totlight')+light;s('gb_totlight',String(tot));
+    var xp=num('gb_xp'),before=levelFromXp(xp);xp+=light;s('gb_xp',String(xp));var after=levelFromXp(xp);
+    if(after.level>before.level){setTimeout(function(){banner('Level Up!','You reached Level '+after.level,'⭐');confetti(80);buzz([0,40,30,60]);},280);if(after.level>=5)unlock('lv5');if(after.level>=10)unlock('lv10');}
+    if(mode){var modes=jget('gb_modes',{});modes[mode]=1;jset('gb_modes',modes);if(Object.keys(modes).length>=5)unlock('all5');}
+    var bk='gb_best_'+mode,hadBest=g(bk,null)!=null,pb=num(bk);
+    if(light>pb){s(bk,String(light));if(hadBest&&light>0){setTimeout(function(){banner('New personal best!',prettyMode(mode)+'  ·  '+light+' light','🏆');confetti(95);buzz([0,50,40,50]);},150);}}
+    if(tot>=1000)unlock('k1');if(tot>=5000)unlock('k5');if(tot>=25000)unlock('k25');
+    if(num('gb_games')===0)unlock('first');
+    s('gb_games',String(num('gb_games')+1));
+    renderBadge();
+  }
+
+  function renderBadge(){var host=document.querySelector('#s-home .topbar .t');if(!host)return;var st=num('gb_streak'),L=levelFromXp(num('gb_xp')),pct=Math.max(5,Math.round(L.into/L.need*100));
+    host.innerHTML='<span class="gb-badge" onclick="gbShowProgress()"><span class="fire">🔥</span>'+st+'<span class="dot">·</span>⭐'+L.level+'<span class="xpbar"><i style="width:'+pct+'%"></i></span></span>';}
+  window.gbShowProgress=function(){var L=levelFromXp(num('gb_xp'));toastSafe('Level '+L.level+'  ·  '+L.into+'/'+L.need+' XP  ·  🔥 '+num('gb_streak')+'-day streak  ·  '+num('gb_totlight')+' total light');};
+  function maybeWelcome(){var td=today();if(g('gb_greet','')===td)return;s('gb_greet',td);var st=num('gb_streak');if(st>=2)setTimeout(function(){banner('Welcome back!','🔥 '+st+'-day streak — play to keep it','🔥');},650);}
+
+  // hook fetch: every game's score-save flows through api()->fetch(POST /scores)
+  var _fetch=window.fetch;
+  window.fetch=function(input,init){try{var url=(typeof input==='string')?input:(input&&input.url)||'';var method=((init&&init.method)||(input&&input.method)||'GET').toUpperCase();
+    if(method==='POST'&&/\/scores(\?|$)/.test(url)){var body=init&&init.body;if(typeof body==='string'){var d=JSON.parse(body);if(d&&(d.mode||d.light!=null)){setTimeout(function(){try{onGame(d.mode,d.light,d.level);}catch(e){}},0);}}}
+  }catch(e){}return _fetch.apply(this,arguments);};
+
+  // hook show: refresh the badge whenever the home screen appears
+  var _show=window.show;
+  window.show=function(name){var r=_show?_show.apply(this,arguments):undefined;try{if(name==='s-home'){renderBadge();maybeWelcome();}}catch(e){}return r;};
+
+  function init(){renderBadge();var h=document.querySelector('#s-home');if(h&&h.classList.contains('active'))maybeWelcome();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+<!-- ================= /Glowbloom Engagement Layer ================= -->
 </body>
 </html>

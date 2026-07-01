@@ -61,7 +61,7 @@ String get kAppOpenUnitId =>
 AdRequest _adReq() => AdRequest(nonPersonalizedAds: true);
 
 // Frequency caps
-const int _interEveryGames = 2; // interstitial at most once per 2 games
+const int _interEveryGames = 3; // 1 pre-play ad per login, then <=1 per 3 games
 const Duration _minFullscreenGap =
     Duration(seconds: 45); // min gap between ANY two full-screen ads
 const Duration _appOpenMinGap = Duration(seconds: 30);
@@ -207,12 +207,20 @@ class _WebShellState extends State<WebShell> with WidgetsBindingObserver {
     );
   }
 
-  // Called at a game BOUNDARY: done=true after a finished game, done=false when
-  // entering a game (before it starts). Only finished games advance the counter,
-  // so the cap stays honest whichever boundary the ad lands on.
-  void _adBoundary(bool done) {
+  // Called at a game BOUNDARY. preplay=true is the one-time pre-play ad after a
+  // login (shows immediately, subject to the gap). Otherwise only finished games
+  // (done=true) advance the counter, and an ad shows once per _interEveryGames.
+  void _adBoundary(bool done, bool preplay) {
+    if (preplay) {
+      _showInterstitialNow();
+      return;
+    }
     if (done) _gamesSinceInter++;
     if (_gamesSinceInter < _interEveryGames) return;
+    _showInterstitialNow();
+  }
+
+  void _showInterstitialNow() {
     if (!_canShowFullscreen || _interstitial == null) return;
     final ad = _interstitial!;
     _interstitial = null;
@@ -348,7 +356,7 @@ class _WebShellState extends State<WebShell> with WidgetsBindingObserver {
           _showRewarded();
           break;
         case 'interstitial':
-          _adBoundary(data['done'] == true);
+          _adBoundary(data['done'] == true, data['preplay'] == true);
           break;
         case 'banner':
           final show = data['show'] != false;

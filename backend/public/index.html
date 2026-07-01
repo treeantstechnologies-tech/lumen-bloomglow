@@ -1238,19 +1238,22 @@ body.gameplay .builtby-fixed{display:none;}
 <script id="gb-ads-bridge">
 (function(){
   'use strict';
-  var INTER_EVERY=2, MIN_GAP_MS=45000;              // <=1 interstitial per 2 games, >=45s apart
+  var INTER_EVERY=3, MIN_GAP_MS=45000;              // 1 pre-play ad per login, then <=1 per 3 games, >=45s apart
   var PLAY_SCREENS={'s-game':1,'s-bstorm':1,'s-trails':1,'s-spectra':1,'s-chimni':1};
   function nat(o){try{if(window.GBNative&&window.GBNative.postMessage){window.GBNative.postMessage(JSON.stringify(o));}}catch(e){}}
   function isMinor(){if(window.GB_MINOR===true)return true;try{var k=document.getElementById('kidsNote');if(k&&k.style&&k.style.display==='block')return true;}catch(e){}return false;}
   function inApp(){return window.GB_NATIVE===true;}
   function reportAds(){nat({action:'adsConfig',minor:isMinor()});}
 
-  // ---- game boundary (before start / after finish) -> capped interstitial ----
-  var _sinceAd=0,_lastAd=0;
+  // ---- boundary: 1 pre-play ad each login, then <=1 per INTER_EVERY games ----
+  var _sinceAd=0,_lastAd=0,_preplay=true;
   function boundary(done){
     if(isMinor())return;
-    nat({action:'interstitial',done:done});         // installed app: native shows + caps
-    if(inApp())return;                              // in the app AdMob handles it
+    var pre=(!done&&_preplay);
+    if(pre)_preplay=false;
+    nat({action:'interstitial',done:done,preplay:pre});   // installed app: native shows + caps
+    if(inApp())return;                                    // in the app AdMob handles it
+    if(pre){if(Date.now()-_lastAd>=MIN_GAP_MS&&!document.getElementById('gb-simad')){_sinceAd=0;_lastAd=Date.now();simInterstitial();}return;}
     if(done)_sinceAd++;
     if(_sinceAd<INTER_EVERY)return;
     if(Date.now()-_lastAd<MIN_GAP_MS)return;
@@ -1280,8 +1283,8 @@ body.gameplay .builtby-fixed{display:none;}
   }
 
   // ---- hooks ----
-  var _show=window.show;
-  window.show=function(name){var r=_show?_show.apply(this,arguments):undefined;try{setTimeout(function(){syncBanner();if(name==='s-home')reportAds();if(PLAY_SCREENS[name])boundary(false);},0);}catch(e){}return r;};
+  var _show=window.show,_lastScreen=null;
+  window.show=function(name){var r=_show?_show.apply(this,arguments):undefined;try{setTimeout(function(){if(name==='s-home'&&(_lastScreen==='s-login'||_lastScreen==='s-onb'))_preplay=true;_lastScreen=name;syncBanner();if(name==='s-home')reportAds();if(PLAY_SCREENS[name])boundary(false);},0);}catch(e){}return r;};
   var _fetch=window.fetch;
   window.fetch=function(input,init){try{var url=(typeof input==='string')?input:(input&&input.url)||'';var m=((init&&init.method)||'GET').toUpperCase();if(m==='POST'&&/\/scores(\?|$)/.test(url)){setTimeout(function(){boundary(true);},1200);}}catch(e){}return _fetch.apply(this,arguments);};
   try{setTimeout(reportAds,1500);}catch(e){}

@@ -11,7 +11,7 @@ dependencies:
     sdk: flutter
   webview_flutter: ^4.8.0
   google_sign_in: ^6.2.1
-  google_mobile_ads: ^5.2.0
+  google_mobile_ads: ">=7.0.0 <9.0.0"  # 7.0.0+ supports Gradle 9 / AGP 9 (fixes the configurations.all build crash)
   cupertino_icons: ^1.0.8
 
 dev_dependencies:

@@ -1222,22 +1222,72 @@ body.gameplay .builtby-fixed{display:none;}
 </script>
 <!-- ================= /Glowbloom Engagement Layer ================= -->
 
-<!-- ================= Ad bridge (web -> native shell) ================= -->
+<!-- ================= Ad bridge + web ad simulator ================= -->
+<style id="gb-simad-css">
+  #gb-simbanner{position:fixed;left:0;right:0;bottom:0;height:44px;z-index:99990;display:none;align-items:center;justify-content:center;pointer-events:none;background:linear-gradient(180deg,rgba(20,16,40,0),rgba(20,16,40,.7));font-family:'Fredoka','Poppins',sans-serif;}
+  #gb-simbanner .box{background:linear-gradient(135deg,#2a2350,#1a1636);border:1px dashed rgba(255,255,255,.35);border-radius:8px;padding:5px 14px;color:#cfd2f2;font-size:11.5px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.35);}
+  #gb-simbanner .box b{color:#FFC36B;}
+  #gb-simad{position:fixed;inset:0;z-index:100050;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:rgba(8,6,18,.93);font-family:'Fredoka','Poppins',sans-serif;text-align:center;padding:24px;}
+  #gb-simad .tag{position:absolute;top:14px;left:14px;font-size:11px;letter-spacing:1px;color:#9aa3c7;text-transform:uppercase;}
+  #gb-simad .card{width:min(80vw,320px);height:min(48vh,320px);border-radius:20px;border:2px dashed rgba(124,91,255,.55);background:linear-gradient(160deg,rgba(124,91,255,.22),rgba(255,167,38,.14));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#fff;padding:12px;}
+  #gb-simad .card .big{font-size:24px;font-weight:800;}
+  #gb-simad .card .sub{font-size:12.5px;color:#cfd2f2;max-width:82%;line-height:1.35;}
+  #gb-simad .close{margin-top:2px;padding:10px 22px;border-radius:999px;border:none;font-weight:700;font-size:14px;color:#0b0f1f;background:linear-gradient(135deg,#FFC36B,#FF9DBB);opacity:.5;pointer-events:none;font-family:inherit;}
+  #gb-simad .close.on{opacity:1;pointer-events:auto;cursor:pointer;}
+</style>
 <script id="gb-ads-bridge">
 (function(){
+  'use strict';
+  var INTER_EVERY=2, MIN_GAP_MS=45000;              // <=1 interstitial per 2 games, >=45s apart
+  var PLAY_SCREENS={'s-game':1,'s-bstorm':1,'s-trails':1,'s-spectra':1,'s-chimni':1};
   function nat(o){try{if(window.GBNative&&window.GBNative.postMessage){window.GBNative.postMessage(JSON.stringify(o));}}catch(e){}}
   function isMinor(){if(window.GB_MINOR===true)return true;try{var k=document.getElementById('kidsNote');if(k&&k.style&&k.style.display==='block')return true;}catch(e){}return false;}
+  function inApp(){return window.GB_NATIVE===true;}
   function reportAds(){nat({action:'adsConfig',minor:isMinor()});}
+
+  // ---- game boundary (before start / after finish) -> capped interstitial ----
+  var _sinceAd=0,_lastAd=0;
+  function boundary(done){
+    if(isMinor())return;
+    nat({action:'interstitial',done:done});         // installed app: native shows + caps
+    if(inApp())return;                              // in the app AdMob handles it
+    if(done)_sinceAd++;
+    if(_sinceAd<INTER_EVERY)return;
+    if(Date.now()-_lastAd<MIN_GAP_MS)return;
+    if(document.getElementById('gb-simad'))return;
+    _sinceAd=0;_lastAd=Date.now();simInterstitial();
+  }
+
+  // ---- banner: menus only, hidden during gameplay ----
   var _play=null;
-  function syncBanner(){var p=document.body.classList.contains('gameplay');if(p!==_play){_play=p;nat({action:'banner',show:!p});}}
+  function syncBanner(){var p=document.body.classList.contains('gameplay');if(p!==_play){_play=p;nat({action:'banner',show:!p});if(!inApp())simBanner(!p);}}
+
+  // ---- browser-only visual simulators (the installed app uses real AdMob) ----
+  function simBanner(show){
+    if(isMinor())show=false;
+    var el=document.getElementById('gb-simbanner');
+    if(!el){el=document.createElement('div');el.id='gb-simbanner';el.innerHTML='<div class="box"><b>Ad</b> &middot; banner placement (test)</div>';document.body.appendChild(el);}
+    el.style.display=show?'flex':'none';
+  }
+  function simInterstitial(){
+    if(document.getElementById('gb-simad'))return;
+    var o=document.createElement('div');o.id='gb-simad';
+    o.innerHTML='<div class="tag">Advertisement &middot; test</div><div class="card"><div class="big">Your ad here</div><div class="sub">Full-screen ad between games. Real ads appear in the installed app.</div></div><button class="close">Close</button>';
+    document.body.appendChild(o);
+    var btn=o.querySelector('.close');var n=3;btn.textContent='Close in '+n+'s';
+    var t=setInterval(function(){n--;if(n<=0){clearInterval(t);btn.classList.add('on');btn.textContent='Close ✕';}else{btn.textContent='Close in '+n+'s';}},1000);
+    btn.onclick=function(){if(btn.classList.contains('on')){clearInterval(t);if(o.parentNode)o.parentNode.removeChild(o);}};
+  }
+
+  // ---- hooks ----
   var _show=window.show;
-  window.show=function(n){var r=_show?_show.apply(this,arguments):undefined;try{setTimeout(function(){syncBanner();if(n==='s-home')reportAds();},0);}catch(e){}return r;};
+  window.show=function(name){var r=_show?_show.apply(this,arguments):undefined;try{setTimeout(function(){syncBanner();if(name==='s-home')reportAds();if(PLAY_SCREENS[name])boundary(false);},0);}catch(e){}return r;};
   var _fetch=window.fetch;
-  window.fetch=function(input,init){try{var url=(typeof input==='string')?input:(input&&input.url)||'';var m=((init&&init.method)||'GET').toUpperCase();if(m==='POST'&&/\/scores(\?|$)/.test(url)&&!isMinor()){setTimeout(function(){nat({action:'interstitial'});},1200);}}catch(e){}return _fetch.apply(this,arguments);};
+  window.fetch=function(input,init){try{var url=(typeof input==='string')?input:(input&&input.url)||'';var m=((init&&init.method)||'GET').toUpperCase();if(m==='POST'&&/\/scores(\?|$)/.test(url)){setTimeout(function(){boundary(true);},1200);}}catch(e){}return _fetch.apply(this,arguments);};
   try{setTimeout(reportAds,1500);}catch(e){}
   window.addEventListener('gb-native-ready',function(){try{setTimeout(reportAds,300);syncBanner();}catch(e){}});
 })();
 </script>
-<!-- ================= /Ad bridge ================= -->
+<!-- ================= /Ad bridge + web ad simulator ================= -->
 </body>
 </html>

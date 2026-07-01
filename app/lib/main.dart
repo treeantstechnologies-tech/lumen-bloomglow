@@ -61,9 +61,9 @@ String get kAppOpenUnitId =>
 AdRequest _adReq() => AdRequest(nonPersonalizedAds: true);
 
 // Frequency caps
-const int _interEveryGames = 3; // interstitial at most every 3rd game-over
+const int _interEveryGames = 2; // interstitial at most once per 2 games
 const Duration _minFullscreenGap =
-    Duration(seconds: 60); // min gap between ANY two full-screen ads
+    Duration(seconds: 45); // min gap between ANY two full-screen ads
 const Duration _appOpenMinGap = Duration(seconds: 30);
 const Duration _appOpenMaxCache = Duration(hours: 4);
 
@@ -207,8 +207,11 @@ class _WebShellState extends State<WebShell> with WidgetsBindingObserver {
     );
   }
 
-  void _onGameOver() {
-    _gamesSinceInter++;
+  // Called at a game BOUNDARY: done=true after a finished game, done=false when
+  // entering a game (before it starts). Only finished games advance the counter,
+  // so the cap stays honest whichever boundary the ad lands on.
+  void _adBoundary(bool done) {
+    if (done) _gamesSinceInter++;
     if (_gamesSinceInter < _interEveryGames) return;
     if (!_canShowFullscreen || _interstitial == null) return;
     final ad = _interstitial!;
@@ -345,7 +348,7 @@ class _WebShellState extends State<WebShell> with WidgetsBindingObserver {
           _showRewarded();
           break;
         case 'interstitial':
-          _onGameOver();
+          _adBoundary(data['done'] == true);
           break;
         case 'banner':
           final show = data['show'] != false;
